@@ -1,5 +1,5 @@
 ﻿using System;
-using Celeste.Mod.YaoiHelper.Triggers;
+using Celeste.Mod.YaoiHelper.Handlers;
 
 namespace Celeste.Mod.YaoiHelper;
 
@@ -27,10 +27,10 @@ public class YaoiHelperModule : EverestModule {
     }
 
     public override void Load() {
-		HDShaderManager.ApplyHooks();
+		HDShaderHandler.ApplyHooks();
     }
 
     public override void Unload() {
-		HDShaderManager.RemoveHooks();
+		HDShaderHandler.RemoveHooks();
     }
 }

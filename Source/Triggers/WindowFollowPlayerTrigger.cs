@@ -32,9 +32,9 @@ public sealed unsafe class WindowFollowPlayerTrigger : Trigger {
 		base.OnEnter(player);
 		int x, y;
 		// TODO: this doesn't work on macos hence why it's commented out and the bounds are hardcoded in
-		// SDL_GetRendererOutputSize(SDL_GetRenderer(Engine.Instance.Window.Handle), &x, &y);
-		// bounds = new Vector2(x, y);
-		bounds = new Vector2(1470, 956);
+		SDL_GetRendererOutputSize(SDL_GetRenderer(Engine.Instance.Window.Handle), &x, &y);
+		bounds = new Vector2(x, y);
+		// bounds = new Vector2(1470, 956);
 		Engine.SetWindowed((int)windowSize.X, (int)windowSize.Y);
 		player.SceneAs<Level>().Camera.Zoom = zoom;
 	}

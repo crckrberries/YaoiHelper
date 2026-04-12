@@ -8,24 +8,32 @@ namespace Celeste.Mod.YaoiHelper.Triggers;
 [CustomEntity("YaoiHelper/MouselineTrigger")]
 public class MouselineTrigger(EntityData data, Vector2 offset) : Trigger(data, offset) {
 	private Vector2 mousePos;
+
+	public bool Fling = data.Bool("fling");
+	public bool AllowDashing = data.Bool("allow_dashing");
+
 	public override void OnStay(Player player) {
 		base.Update();
 
-		if (player.StateMachine.State != 0) return;
-		// player.Speed = (mousePos - player.Position) * 10; 
+		Vector2 last = player.Position;
+
+		if (player.StateMachine.State != 0 && AllowDashing) return;
 		player.Position = mousePos;
+		if (!CollideCheck(player) && Fling) {
+			player.Speed += (player.Position - last) * 10;
+		}
 
 	}
 
 	public override void Update() {
 		base.Update();
-		mousePos = (new Vector2(MInput.Mouse.X, MInput.Mouse.Y)) / 6 + SceneAs<Level>().LevelOffset;
+		mousePos = new Vector2(MInput.Mouse.X, MInput.Mouse.Y) / 6 + SceneAs<Level>().LevelOffset;
 
 	}
 
 	public override void Render() {
 		base.Render();
 
-		Draw.Point(mousePos / 6 + SceneAs<Level>().LevelOffset, Color.Red);
+		Draw.Point(mousePos / 6, Color.Red);
 	}
 }

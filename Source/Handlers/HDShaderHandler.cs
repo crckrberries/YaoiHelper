@@ -40,6 +40,7 @@ public static class HDShaderHandler {
 		cursor.GotoNext(MoveType.After, cursor => cursor.MatchCallvirt<SpriteBatch>("End"));
 		cursor.MarkLabel(dodge_regularrender);
 
+		cursor.MoveAfterLabels();
 		cursor.EmitLdarg0();
 		cursor.EmitDelegate(renderWithEffects);
 
@@ -47,7 +48,6 @@ public static class HDShaderHandler {
 	}
 
 	private static void renderPlayerToTempA(Level level) {
-		Console.WriteLine("Haiiiii");
 		if (level.Tracker.CountEntities<HDShaderController>() == 0) return;
 		if (!level.Tracker.GetEntities<HDShaderController>().Cast<HDShaderController>().First().RenderPlayerOver) return;
 		Engine.Graphics.GraphicsDevice.SetRenderTarget(GameplayBuffers.TempA);
@@ -99,7 +99,7 @@ public static class HDShaderHandler {
 		float scale = level.Zoom * ((vector.X -  level.ScreenPadding * 2f) / 320f);
 		Vector2 vector4 = new Vector2(level.ScreenPadding, level.ScreenPadding * 0.5625f);
 
-		Engine.Graphics.GraphicsDevice.SetRenderTarget(effects.Count > 0 ? (RenderTarget2D)targets[0] :  null);
+		Engine.Graphics.GraphicsDevice.SetRenderTarget(effects.Count > 0 ? (RenderTarget2D)targets[0] : null);
 
 		Engine.Graphics.GraphicsDevice.Clear(Color.Black);
 		Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.CreateScale(6f) * Engine.ScreenMatrix);
@@ -116,8 +116,13 @@ public static class HDShaderHandler {
 
 				Engine.Graphics.GraphicsDevice.SetRenderTarget(target);
 				Engine.Graphics.GraphicsDevice.Clear(Color.Black);
+
+				// for proper letterboxing
+				if (target == null) {
+					Engine.Graphics.GraphicsDevice.Viewport = Engine.Viewport;
+				}
+
 				Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, passShaderParams(effects[i], level), Engine.ScreenMatrix);
-				// TODO: handle letterboxing properly
 				Draw.SpriteBatch.Draw((RenderTarget2D)source, Vector2.Zero, source.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
 				Draw.SpriteBatch.End();
 			}

@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.Entities;
-using Celeste.Mod.YaoiHelper.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
-using MonoMod.Cil;
 
 namespace Celeste.Mod.YaoiHelper.Triggers;
 
@@ -19,7 +17,7 @@ public sealed class HDShaderTrigger : Trigger {
 
 	public HDShaderTrigger(EntityData data, Vector2 offset) : base(data, offset) {
 		Console.WriteLine(data.String("effects"));
-		Effects = data.Attr("effects").Split(',').Select(x => new Effect(Engine.Graphics.GraphicsDevice, Everest.Content.Get($"Effects/{x}.cso", true).Data)).ToList();
+		Effects = data.Attr("effects").Split(',').Select(x => new Effect(Engine.Graphics.GraphicsDevice, Everest.Content.Get($"Effects/{x.Trim()}.cso", true).Data)).ToList();
 		AlwaysActive = data.Bool("always_active");
 		Activated = AlwaysActive;
 	}

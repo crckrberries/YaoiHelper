@@ -38,22 +38,39 @@ float fbm(float3 x) {
 uniform float Time; // level.TimeActive
 uniform float2 CamPos; // level.Camera.Position
 uniform float2 Dimensions; // new Vector2(320, 180)
-DECLARE_TEXTURE(text, 0);
 
-float4 SpritePixelShader(float2 uv : TEXCOORD0) : SV_TARGET0
+uniform float4x4 ViewMatrix;
+uniform float4x4 TransformMatrix;
+
+DECLARE_TEXTURE(text, 0);
+DECLARE_TEXTURE(mask, 3);
+
+float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 {
 	float3 p = float3(float2(uv.x * 2.5 + .5 * Time, uv.y * 2.5) + CamPos / Dimensions, .5 * Time);
 	float n = fbm(p + fbm(p + fbm(p + fbm(p))));
 
-	float4 bg = SAMPLE_TEXTURE(text, uv);
+	float4 fg = float4(1., 1., 1., 1.);
+	if (SAMPLE_TEXTURE(mask, uv).r != 0.) {
+		return SAMPLE_TEXTURE(text, uv);
+	}
 
-	return bg;
+	return lerp(float4(0., 0., 0., 1.), fg, n * 1);
+}
+
+void SpriteVertexShader(inout float4 color    : COLOR0,
+                        inout float2 texCoord : TEXCOORD0,
+                        inout float4 position : SV_Position)
+{
+    position = mul(position, ViewMatrix);
+    position = mul(position, TransformMatrix);
 }
 
 technique Shader
 {
     pass pass0
     {
+        VertexShader = compile vs_3_0 SpriteVertexShader();
         PixelShader = compile ps_3_0 SpritePixelShader();
     }
 }

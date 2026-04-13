@@ -2,5 +2,6 @@ triggers.YaoiHelper/MinimizeGameTrigger.placements.name.minimize_game=Minimize G
 triggers.YaoiHelper/HDShaderTrigger.placements.name.hd_shader=HD Shader
 triggers.YaoiHelper/MouselineTrigger.placements.name.mouseline_trigger=Mouse Control
 triggers.YaoiHelper/WindowFollowPlayerTrigger.placements.name.window_follow_player=Window Follow Player
+triggers.YaoiHelper/ShaderMask.placements.name.shader_mask=HD Shader Mask
 
 entities.YaoiHelper/HDShaderController.placements.name.hd_shader_controller=HD Shader Controller

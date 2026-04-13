@@ -14,6 +14,7 @@ public static class HDShaderHandler {
 	private static readonly List<VirtualRenderTarget> targets = new(2) { 
 		VirtualContent.CreateRenderTarget("hd-shader-1", 1920, 1080),
 		VirtualContent.CreateRenderTarget("hd-shader-2", 1920, 1080),
+		VirtualContent.CreateRenderTarget("hd-shader-mask", 1920, 1080),
 	};
 
 	public static void il_LevelRender_ApplyShader(ILContext il) {
@@ -80,10 +81,14 @@ public static class HDShaderHandler {
 		Draw.SpriteBatch.End();
 	}
 
-	private static Effect passShaderParams(Effect eff, Level level) {
+	private static Effect passShaderParams(Effect eff, Level level, RenderTarget2D target) {
 		eff.Parameters["Time"].SetValue(level.TimeActive);
 		eff.Parameters["CamPos"].SetValue(level.Camera.Position);
 		eff.Parameters["Dimensions"].SetValue(new Vector2(1920, 1080));
+
+		// Go my jank
+		eff.Parameters["ViewMatrix"].SetValue(target == null ? Matrix.CreateOrthographicOffCenter(0, Engine.Viewport.Width, Engine.Viewport.Height, 0, 0, 1) : Matrix.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, 1));
+		eff.Parameters["TransformMatrix"].SetValue(Matrix.Identity);
 
 		return eff;
 	}
@@ -99,9 +104,30 @@ public static class HDShaderHandler {
 		float scale = level.Zoom * ((vector.X -  level.ScreenPadding * 2f) / 320f);
 		Vector2 vector4 = new Vector2(level.ScreenPadding, level.ScreenPadding * 0.5625f);
 
-		Engine.Graphics.GraphicsDevice.SetRenderTarget(effects.Count > 0 ? (RenderTarget2D)targets[0] : null);
-
+		// draw mask
+		Engine.Graphics.GraphicsDevice.SetRenderTarget(targets[2]);
 		Engine.Graphics.GraphicsDevice.Clear(Color.Black);
+
+		// // for proper letterboxing
+		// Engine.Graphics.GraphicsDevice.Viewport = Engine.Viewport;
+
+		Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.CreateScale(6f) * Engine.ScreenMatrix);
+		foreach (ShaderMask sm in level.Tracker.GetEntities<ShaderMask>().Cast<ShaderMask>()) {
+			sm.RenderMask();
+		}
+		Draw.SpriteBatch.End();
+
+		Engine.Graphics.GraphicsDevice.Textures[3] = targets[2];
+
+
+		Engine.Graphics.GraphicsDevice.SetRenderTarget(effects.Count > 0 ? (RenderTarget2D)targets[0] : null);
+		Engine.Graphics.GraphicsDevice.Clear(Color.Black);
+
+		if (effects.Count == 0) {
+			// for proper letterboxing
+			Engine.Graphics.GraphicsDevice.Viewport = Engine.Viewport;
+		}
+
 		Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.CreateScale(6f) * Engine.ScreenMatrix);
 		Draw.SpriteBatch.Draw((RenderTarget2D)GameplayBuffers.Level, vector3 + vector4, GameplayBuffers.Level.Bounds, Color.White, 0f, vector3, scale, SpriteEffects.None, 0f);
 		Draw.SpriteBatch.End();
@@ -117,12 +143,12 @@ public static class HDShaderHandler {
 				Engine.Graphics.GraphicsDevice.SetRenderTarget(target);
 				Engine.Graphics.GraphicsDevice.Clear(Color.Black);
 
-				// for proper letterboxing
+				// again, for proper letterboxing
 				if (target == null) {
 					Engine.Graphics.GraphicsDevice.Viewport = Engine.Viewport;
 				}
 
-				Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, passShaderParams(effects[i], level), Engine.ScreenMatrix);
+				Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, passShaderParams(effects[i], level, target), Engine.ScreenMatrix);
 				Draw.SpriteBatch.Draw((RenderTarget2D)source, Vector2.Zero, source.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
 				Draw.SpriteBatch.End();
 			}

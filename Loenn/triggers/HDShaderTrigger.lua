@@ -5,7 +5,8 @@ HDShaderTrigger.placements = {
 	name = "hd_shader",
 	data = {
 		effects = "",
-		always_active=true
+		mask_groups = "",
+		always_active=false
 	}
 }
 

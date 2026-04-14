@@ -5,7 +5,8 @@ shaderMask.name = "YaoiHelper/ShaderMask"
 shaderMask.placements = {
 	name = "shader_mask",
 	data = {
-		mask_groups = ""
+		mask_groups = "",
+		hi_res = false;
 	}
 }
 

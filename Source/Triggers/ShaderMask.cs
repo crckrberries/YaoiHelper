@@ -12,8 +12,20 @@ namespace Celeste.Mod.YaoiHelper.Triggers;
 [Tracked]
 public sealed class ShaderMask(EntityData data, Vector2 offset) : Trigger(data, offset), IShaderMask {
 	public List<string> MaskGroups = data.Attr("mask_groups").Split(',').Select(x => x.Trim()).ToList();
+	public bool HiRes = data.Bool("hi_res", false);
 
 	public void RenderMask() {
-		Draw.Rect(Collider.AbsolutePosition - SceneAs<Level>().LevelOffset, Collider.Width, Collider.Height, Color.White);
+		if (HiRes) {
+			renderhires();
+		} else {
+			renderlowres();
+		}
+	}
+
+	private void renderlowres() {
+		Draw.Rect(Vector2.Transform(Collider.AbsolutePosition, SceneAs<Level>().Camera.Matrix), Collider.Width, Collider.Height, Color.White);
+	}
+	private void renderhires() {
+		Draw.Rect(Vector2.Transform(Collider.AbsolutePosition, SceneAs<Level>().Camera.Matrix * Matrix.CreateScale(6f)), Collider.Width * 6, Collider.Height * 6, Color.White);
 	}
 }

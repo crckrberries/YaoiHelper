@@ -44,6 +44,7 @@ public static class HDShaderHandler {
 	}
 
 	private static void renderPlayerToTempA(Level level) {
+		if (level.Tracker.CountEntities<HDShaderController>() == 0) return;
 		if (!level.Tracker.GetEntity<HDShaderController>().RenderPlayerOver) return;
 		Engine.Graphics.GraphicsDevice.SetRenderTarget(GameplayBuffers.TempA);
 		Engine.Graphics.GraphicsDevice.Clear(Color.Transparent);
@@ -95,9 +96,8 @@ public static class HDShaderHandler {
 
 	private static void renderWithShaders(Level level) {
 		HDShaderController controller = level.Tracker.GetEntity<HDShaderController>();
-
 		List<Shader> shaders = level.Tracker.GetEntities<HDShaderTrigger>().Cast<HDShaderTrigger>().Where(x => x.Activated).SelectMany(x => x.Shaders).ToList();
-		bool applyShaders = shaders.Count > 0;
+		bool applyShaders = shaders.Count > 0 && level.Tracker.CountEntities<HDShaderController>() > 0;
 		
 		// i have no clue what these constants do 
 		Vector2 vector = new Vector2(320f, 180f);
@@ -106,21 +106,22 @@ public static class HDShaderHandler {
 		float scale = level.Zoom * ((vector.X -  level.ScreenPadding * 2f) / 320f);
 		Vector2 vector4 = new Vector2(level.ScreenPadding, level.ScreenPadding * 0.5625f);
 
-		// draw mask
-		// ==========================================================================
-		List<ShaderMask> shaderMasks = level.Tracker.GetEntities<ShaderMask>().Cast<ShaderMask>().ToList();
-		List<string> groupsInScene = shaderMasks.SelectMany(x => x.MaskGroups).ToList();
-		foreach (string group in groupsInScene) {
-			Engine.Graphics.GraphicsDevice.SetRenderTarget(controller.GetMaskGroupTarget(group));
-			Engine.Graphics.GraphicsDevice.Clear(Color.Black);
+		if (applyShaders) {
+			// draw masks (low-res)
+			List<ShaderMask> lowresMasks = level.Tracker.GetEntities<ShaderMask>().Cast<ShaderMask>().Where(x => !x.HiRes).ToList();
+			List<string> groupsInScene = lowresMasks.SelectMany(x => x.MaskGroups).ToList();
+			foreach (string group in groupsInScene) {
+				Engine.Graphics.GraphicsDevice.SetRenderTarget(controller.GetMaskGroupTarget(group));
+				Engine.Graphics.GraphicsDevice.Clear(Color.Black);
 
-			Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.CreateScale(6f) * Engine.ScreenMatrix);
+				Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.CreateScale(6f) * Engine.ScreenMatrix);
 
-			foreach (ShaderMask sm in shaderMasks.Where(x => x.MaskGroups.Contains(group))) {
-				sm.RenderMask();
+				foreach (ShaderMask sm in lowresMasks.Where(x => x.MaskGroups.Contains(group))) {
+					sm.RenderMask();
+				}
+
+				Draw.SpriteBatch.End();
 			}
-
-			Draw.SpriteBatch.End();
 		}
 
 		// draw level
@@ -137,8 +138,25 @@ public static class HDShaderHandler {
 		Draw.SpriteBatch.Draw((RenderTarget2D)GameplayBuffers.Level, vector3 + vector4, GameplayBuffers.Level.Bounds, Color.White, 0f, vector3, scale, SpriteEffects.None, 0f);
 		Draw.SpriteBatch.End();
 
-		RenderTarget2D source, target;
 		if (!applyShaders) return;
+		// draw masks (high-res)
+		List<ShaderMask> hiresMasks = level.Tracker.GetEntities<ShaderMask>().Cast<ShaderMask>().Where(x => x.HiRes).ToList();
+		List<string> hiresGroups = hiresMasks.SelectMany(x => x.MaskGroups).ToList();
+
+		foreach (string group in hiresGroups) {
+			Engine.Graphics.GraphicsDevice.SetRenderTarget(controller.GetMaskGroupTarget(group));
+			Engine.Graphics.GraphicsDevice.Clear(Color.Black);
+
+			Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Engine.ScreenMatrix);
+
+			foreach (ShaderMask sm in hiresMasks.Where(x => x.MaskGroups.Contains(group))) {
+				sm.RenderMask();
+			}
+
+			Draw.SpriteBatch.End();
+		}
+
+		RenderTarget2D source, target;
 
 		for (int i = 0; i < shaders.Count; i++) {
 			source = flipflop_targets[i % 2];

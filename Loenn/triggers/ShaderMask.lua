@@ -6,7 +6,7 @@ shaderMask.placements = {
 	name = "shader_mask",
 	data = {
 		mask_groups = "",
-		hi_res = false;
+		mask_image = "",
 	}
 }
 

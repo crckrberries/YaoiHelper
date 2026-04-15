@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.YaoiHelper.Entities;
+using Celeste.Mod.YaoiHelper.Interfaces;
 using Celeste.Mod.YaoiHelper.Triggers;
 using Celeste.Mod.YaoiHelper.Types;
 using Microsoft.Xna.Framework;
@@ -10,6 +11,7 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.YaoiHelper.Handlers;
 
+// TODO: maybe make this a renderer?
 public static class HDShaderHandler {
 	private static readonly List<VirtualRenderTarget> flipflop_targets = new(2) { 
 		VirtualContent.CreateRenderTarget("hd-shader-flip", 1920, 1080),
@@ -65,9 +67,9 @@ public static class HDShaderHandler {
 
 		// level.Entities.FindAll<TrailManager>().ForEach(tm => tm.Render());
 
-		// if (Engine.Commands.Open) {
-		// 	level.Entities.DebugRender(level.Camera);
-		// }
+		if (Engine.Commands.Open) {
+			level.Entities.DebugRender(level.Camera);
+		}
 
 		// level.ParticlesFG.Render();
 		level.Particles.Render();
@@ -83,12 +85,15 @@ public static class HDShaderHandler {
 		eff.Parameters["Dimensions"].SetValue(new Vector2(1920, 1080));
 
 		// Go my jank
-		eff.Parameters["ViewMatrix"].SetValue(target == null ? Matrix.CreateOrthographicOffCenter(0, Engine.Viewport.Width, Engine.Viewport.Height, 0, 0, 1) : Matrix.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, 1));
+		// TODO: 1920x1080 works on my other computer, Engine.Viewport works on this computer
+		eff.Parameters["ViewMatrix"].SetValue(target == null ? Matrix.CreateOrthographicOffCenter(0, Engine.Instance.Window.ClientBounds.Width, Engine.Instance.Window.ClientBounds.Height, 0, 0, 1) : Matrix.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, 1));
 		eff.Parameters["TransformMatrix"].SetValue(Matrix.Identity);
 
 		// TODO TODO TODO TODO TODO AUGHHAHGHAHHGHHAHGHAH
 		for (int i = 0; i < shader.MaskGroups.Length; i++) {
-			Engine.Graphics.GraphicsDevice.Textures[i + 3] = level.Tracker.GetEntity<HDShaderController>().GetMaskGroupTarget(shader.MaskGroups[i]);
+			if (shader.MaskGroups[i] != "") {
+				Engine.Graphics.GraphicsDevice.Textures[i + 3] = level.Tracker.GetEntity<HDShaderController>().GetMaskGroupTarget(shader.MaskGroups[i]);
+			}
 		}
 
 		return eff;
@@ -104,28 +109,9 @@ public static class HDShaderHandler {
 		Vector2 vector2 = vector / level.ZoomTarget;
 		Vector2 vector3 = level.ZoomTarget != 1f ? (level.ZoomFocusPoint - vector2 / 2f) / (vector - vector2) * vector : Vector2.Zero;
 		float scale = level.Zoom * ((vector.X -  level.ScreenPadding * 2f) / 320f);
-		Vector2 vector4 = new Vector2(level.ScreenPadding, level.ScreenPadding * 0.5625f);
-
-		if (applyShaders) {
-			// draw masks (low-res)
-			List<ShaderMask> lowresMasks = level.Tracker.GetEntities<ShaderMask>().Cast<ShaderMask>().Where(x => !x.HiRes).ToList();
-			List<string> groupsInScene = lowresMasks.SelectMany(x => x.MaskGroups).ToList();
-			foreach (string group in groupsInScene) {
-				Engine.Graphics.GraphicsDevice.SetRenderTarget(controller.GetMaskGroupTarget(group));
-				Engine.Graphics.GraphicsDevice.Clear(Color.Black);
-
-				Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.CreateScale(6f) * Engine.ScreenMatrix);
-
-				foreach (ShaderMask sm in lowresMasks.Where(x => x.MaskGroups.Contains(group))) {
-					sm.RenderMask();
-				}
-
-				Draw.SpriteBatch.End();
-			}
-		}
+		Vector2 vector4 = new Vector2(level.ScreenPadding, level.ScreenPadding * /* 9f/16f, which is */ 0.5625f);
 
 		// draw level
-		// ==========================================================================
 		Engine.Graphics.GraphicsDevice.SetRenderTarget(applyShaders ? (RenderTarget2D)flipflop_targets[0] : null);
 		Engine.Graphics.GraphicsDevice.Clear(Color.Black);
 
@@ -139,23 +125,25 @@ public static class HDShaderHandler {
 		Draw.SpriteBatch.End();
 
 		if (!applyShaders) return;
-		// draw masks (high-res)
-		List<ShaderMask> hiresMasks = level.Tracker.GetEntities<ShaderMask>().Cast<ShaderMask>().Where(x => x.HiRes).ToList();
-		List<string> hiresGroups = hiresMasks.SelectMany(x => x.MaskGroups).ToList();
+		
+		// draw masks
+		List<IShaderMask> shaderMasks = level.Tracker.GetEntities<ShaderMask>().Cast<IShaderMask>().ToList();
+		List<string> maskGroups = shaderMasks.SelectMany(x => x.MaskGroups).ToList();
 
-		foreach (string group in hiresGroups) {
+		foreach (string group in maskGroups) {
 			Engine.Graphics.GraphicsDevice.SetRenderTarget(controller.GetMaskGroupTarget(group));
 			Engine.Graphics.GraphicsDevice.Clear(Color.Black);
 
-			Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Engine.ScreenMatrix);
+			Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.CreateScale(6f) * Engine.ScreenMatrix);
 
-			foreach (ShaderMask sm in hiresMasks.Where(x => x.MaskGroups.Contains(group))) {
+			foreach (IShaderMask sm in shaderMasks.Where(x => x.MaskGroups.Contains(group))) {
 				sm.RenderMask();
 			}
 
 			Draw.SpriteBatch.End();
 		}
 
+		// apply shaders
 		RenderTarget2D source, target;
 
 		for (int i = 0; i < shaders.Count; i++) {

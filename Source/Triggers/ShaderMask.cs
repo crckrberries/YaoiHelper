@@ -11,21 +11,18 @@ namespace Celeste.Mod.YaoiHelper.Triggers;
 [CustomEntity("YaoiHelper/ShaderMask")]
 [Tracked]
 public sealed class ShaderMask(EntityData data, Vector2 offset) : Trigger(data, offset), IShaderMask {
-	public List<string> MaskGroups = data.Attr("mask_groups").Split(',').Select(x => x.Trim()).ToList();
-	public bool HiRes = data.Bool("hi_res", false);
+	private readonly List<string> groups = data.Attr("mask_groups").Split(',').Select(x => x.Trim()).ToList();
+
+	public List<string> MaskGroups => groups;
+	public MTexture image = GFX.Game.GetOrDefault($"shadermasks/{data.Attr("mask_image")}", null);
 
 	public void RenderMask() {
-		if (HiRes) {
-			renderhires();
-		} else {
-			renderlowres();
-		}
-	}
+		Vector2 position = Vector2.Transform(Collider.AbsolutePosition, SceneAs<Level>().Camera.Matrix);
 
-	private void renderlowres() {
-		Draw.Rect(Vector2.Transform(Collider.AbsolutePosition, SceneAs<Level>().Camera.Matrix), Collider.Width, Collider.Height, Color.White);
-	}
-	private void renderhires() {
-		Draw.Rect(Vector2.Transform(Collider.AbsolutePosition, SceneAs<Level>().Camera.Matrix * Matrix.CreateScale(6f)), Collider.Width * 6, Collider.Height * 6, Color.White);
+		if (image == null) {
+			Draw.Rect(position, Collider.Width, Collider.Height, Color.White);
+		} else {
+			image?.Draw(position, Vector2.Zero, Color.White, new Vector2(Width / image.Width, Height / image.Height));
+		}
 	}
 }

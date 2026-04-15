@@ -53,11 +53,8 @@ float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 	float n = fbm(p + fbm(p + fbm(p + fbm(p))));
 
 	float4 fg = float4(1., 1., 1., 1.);
-	if (SAMPLE_TEXTURE(exclude_mask, uv).r != 0.) {
-		return SAMPLE_TEXTURE(text, uv);
-	}
 
-	return lerp(float4(0., 0., 0., 1.), fg, n * 1);
+	return lerp(float4(0., 0., 0., 1.), lerp(fg, SAMPLE_TEXTURE(text, uv), SAMPLE_TEXTURE(exclude_mask, uv).r), n * 1);
 }
 
 void SpriteVertexShader(inout float4 color    : COLOR0,

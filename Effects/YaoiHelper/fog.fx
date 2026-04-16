@@ -43,19 +43,18 @@ uniform float4x4 ViewMatrix;
 uniform float4x4 TransformMatrix;
 
 DECLARE_TEXTURE(text, 0);
-DECLARE_TEXTURE(mask, 3);
+DECLARE_TEXTURE(exclude_mask, 3);
+DECLARE_TEXTURE(reverse_mask, 4);
 
 float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 {
-	float3 p = float3(float2(uv.x * 2.5 + .5 * Time, uv.y * 2.5) + CamPos / Dimensions, .5 * Time);
+	float t = Time * (SAMPLE_TEXTURE(reverse_mask, uv).r - .5) * -2;
+	float3 p = float3(float2(uv.x * 2.5 + .5 * t, uv.y * 2.5) + CamPos / Dimensions, .5 * t);
 	float n = fbm(p + fbm(p + fbm(p + fbm(p))));
 
 	float4 fg = float4(1., 1., 1., 1.);
-	if (SAMPLE_TEXTURE(mask, uv).r != 0.) {
-		return SAMPLE_TEXTURE(text, uv);
-	}
 
-	return lerp(float4(0., 0., 0., 1.), fg, n * 1);
+	return lerp(float4(0., 0., 0., 1.), lerp(fg, SAMPLE_TEXTURE(text, uv), SAMPLE_TEXTURE(exclude_mask, uv).r), n * 1);
 }
 
 void SpriteVertexShader(inout float4 color    : COLOR0,

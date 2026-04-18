@@ -18,7 +18,7 @@ public static class HDShaderHandler {
 		VirtualContent.CreateRenderTarget("hd-shader-flop", 1920, 1080),
 	};
 
-	public static void il_LevelRender_ApplyShader(ILContext il) {
+	public static void IL_LevelRender_ApplyShader(ILContext il) {
 		ILCursor cursor = new ILCursor(il);
 
 		cursor.GotoNext(MoveType.Before,
@@ -86,7 +86,7 @@ public static class HDShaderHandler {
 
 		// Go my jank
 		// TODO: 1920x1080 works on my other computer, Engine.Viewport works on this computer
-		eff.Parameters["ViewMatrix"].SetValue(target == null ? Matrix.CreateOrthographicOffCenter(0, Engine.Instance.Window.ClientBounds.Width, Engine.Instance.Window.ClientBounds.Height, 0, 0, 1) : Matrix.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, 1));
+		eff.Parameters["ViewMatrix"].SetValue(target == null ? Matrix.CreateOrthographicOffCenter(0, Engine.Viewport.Width, Engine.Viewport.Height, 0, 0, 1) : Matrix.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, 1));
 		eff.Parameters["TransformMatrix"].SetValue(Matrix.Identity);
 
 		// TODO TODO TODO TODO TODO AUGHHAHGHAHHGHHAHGHAH
@@ -176,11 +176,11 @@ public static class HDShaderHandler {
 	}
 			
 	public static void ApplyHooks() {
-		IL.Celeste.Level.Render += il_LevelRender_ApplyShader;
+		IL.Celeste.Level.Render += IL_LevelRender_ApplyShader;
 	}
 
 	public static void RemoveHooks() {
-		IL.Celeste.Level.Render -= il_LevelRender_ApplyShader;
+		IL.Celeste.Level.Render -= IL_LevelRender_ApplyShader;
 	}
 
 }

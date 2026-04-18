@@ -11,7 +11,7 @@ namespace Celeste.Mod.YaoiHelper.Entities;
 
 [CustomEntity("YaoiHelper/HDShaderController")]
 [Tracked]
-public class HDShaderController(EntityData data) : Entity() {
+public class HDShaderController(EntityData data, Vector2 offset) : Entity() {
 	public bool RenderPlayerOver = data.Bool("render_player_over");
 
 	private List<VirtualRenderTarget> mask_groups;

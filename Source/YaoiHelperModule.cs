@@ -1,5 +1,7 @@
 ﻿using System;
 using Celeste.Mod.YaoiHelper.Handlers;
+using Celeste.Mod.YaoiHelper.Triggers;
+using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.YaoiHelper;
 
@@ -28,9 +30,11 @@ public class YaoiHelperModule : EverestModule {
 
     public override void Load() {
 		HDShaderHandler.ApplyHooks();
+		DisableGlitchTrigger.ApplyHooks();
     }
 
     public override void Unload() {
 		HDShaderHandler.RemoveHooks();
+		DisableGlitchTrigger.RemoveHooks();
     }
 }

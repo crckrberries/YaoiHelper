@@ -1,4 +1,3 @@
-
 local shaderMask = {}
 
 shaderMask.name = "YaoiHelper/ShaderMask"

@@ -1,3 +1,4 @@
+using System;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -14,13 +15,21 @@ public sealed class BuildController : Entity {
 
 	private TileGrid tileGrid;
 	private Grid grid;
+
 	public BuildController(EntityData data, Vector2 offset) : base(offset) {
 	}
+
 	public override void Awake(Scene scene) {
 		base.Awake(scene);
-		Collider = grid;
-		tileGrid = GFX.FGAutotiler.GenerateOverlay('3', 10, 10, 10, 10, SceneAs<Level>().SolidsData).TileGrid;
-		Add(tileGrid);
+		if (scene is Level level) {
+			tileGrid = new TileGrid(8, 8, level.SolidTiles.Tiles.Tiles.Columns, level.SolidTiles.Tiles.Tiles.Rows);
+		}
+	}
+
+	public VirtualMap<T> CombineVirtualMaps<T>(VirtualMap<T> a, VirtualMap<T> b) {
+		VirtualMap<T> map = new VirtualMap<T>(Math.Max(a.Columns, b.Columns), Math.Max(a.Rows, b.Rows), a.EmptyValue);
+
+		return map;
 	}
 
 	public override void Update() {
@@ -36,7 +45,8 @@ public sealed class BuildController : Entity {
 			Remove(tileGrid);
 			Point tile = new Point((int)mouse_pos.X / 8 + level.LevelSolidOffset.X, (int)mouse_pos.Y / 8 + level.LevelSolidOffset.Y);
 			level.SolidTiles.Grid[tile.X, tile.Y] = true;
-			tileGrid = GFX.FGAutotiler.GenerateOverlay('3', tile.X, tile.Y, 1, 1, level.SolidsData).TileGrid;
+			tileGrid.Tiles[tile.X, tile.Y] = GFX.FGAutotiler.GenerateOverlay('3', tile.X, tile.Y, 1, 1, level.SolidsData).TileGrid.Tiles[level.LevelSolidOffset.X, level.LevelSolidOffset.Y];
+			// tileGrid.Position += (tile - level.LevelSolidOffset).ToVector2() * 8;
 			Add(tileGrid);
 		}
 	}

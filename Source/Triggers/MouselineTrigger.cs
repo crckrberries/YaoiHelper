@@ -6,11 +6,17 @@ using Monocle;
 namespace Celeste.Mod.YaoiHelper.Triggers;
 
 [CustomEntity("YaoiHelper/MouselineTrigger")]
-public class MouselineTrigger(EntityData data, Vector2 offset) : Trigger(data, offset) {
+public class MouselineTrigger : Trigger {
 	private Vector2 mousePos;
 
-	public bool Fling = data.Bool("fling");
-	public bool AllowDashing = data.Bool("allow_dashing");
+	public bool Fling;
+	public bool AllowDashing;
+
+	public MouselineTrigger(EntityData data, Vector2 offset) : base(data, offset) {
+		Visible = true;
+		Fling = data.Bool("fling");
+		AllowDashing = data.Bool("allow_dashing");
+	}
 
 	public override void OnStay(Player player) {
 		base.Update();
@@ -33,6 +39,6 @@ public class MouselineTrigger(EntityData data, Vector2 offset) : Trigger(data, o
 
 	public override void Render() {
 		base.Render();
-		Draw.Point(mousePos, Color.Red);
+		Draw.Circle(mousePos, 5, Color.Red, 5);
 	}
 }

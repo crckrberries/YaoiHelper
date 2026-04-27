@@ -34,16 +34,16 @@ public class YaoiHelperModule : EverestModule {
     public override void Load() {
 		HDShaderHandler.ApplyHooks();
 		DisableGlitchTrigger.ApplyHooks();
-		Everest.Events.Level.OnLoadLevel += static (Level level, Player.IntroTypes introType, bool fromLoader) => {
-			level.Add(new BuildController(new EntityData(), new Vector2(0, 0)));
-		};
+		// Everest.Events.Level.OnLoadLevel += static (Level level, Player.IntroTypes introType, bool fromLoader) => {
+		// 	level.Add(new BuildController(new EntityData(), new Vector2(0, 0)));
+		// };
     }
 
     public override void Unload() {
 		HDShaderHandler.RemoveHooks();
 		DisableGlitchTrigger.RemoveHooks();
-		Everest.Events.Level.OnLoadLevel -= static (Level level, Player.IntroTypes introType, bool fromLoader) => {
-			level.Add(new BuildController(new EntityData(), new Vector2(0, 0)));
-		};
+		// Everest.Events.Level.OnLoadLevel -= static (Level level, Player.IntroTypes introType, bool fromLoader) => {
+		// 	level.Add(new BuildController(new EntityData(), new Vector2(0, 0)));
+		// };
     }
 }

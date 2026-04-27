@@ -15,7 +15,6 @@ public sealed class BuildController : Entity {
 	private readonly char selectedTile;
 
 	public BuildController(EntityData data, Vector2 offset) : base() {
-		Visible = false;
 		Depth = -10000;
 		selectedTile = '3';
 	}

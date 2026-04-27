@@ -100,7 +100,7 @@ public static class HDShaderHandler {
 
 	private static void renderWithShaders(Level level) {
 		HDShaderController controller = level.Tracker.GetEntity<HDShaderController>();
-		List<Shader> shaders = level.Tracker.GetEntities<HDShaderTrigger>().Cast<HDShaderTrigger>().Where(x => x.Activated).SelectMany(x => x.Shaders).ToList();
+		List<Shader> shaders = level.Tracker.GetEntities<HDShaderTrigger>().Cast<HDShaderTrigger>().Where(x => x.Activated(level)).SelectMany(x => x.Shaders).ToList();
 		bool applyShaders = shaders.Count > 0 && level.Tracker.CountEntities<HDShaderController>() > 0;
 		
 		// i have no clue what these constants do 

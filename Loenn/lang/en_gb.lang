@@ -4,5 +4,7 @@ triggers.YaoiHelper/MouselineTrigger.placements.name.mouseline_trigger=Mouse Con
 triggers.YaoiHelper/WindowFollowPlayerTrigger.placements.name.window_follow_player=Window Follow Player
 triggers.YaoiHelper/ShaderMask.placements.name.shader_mask=HD Shader Mask
 triggers.YaoiHelper/DisableGlitchTrigger.placements.name.disable_glitch=Disable Glitch Effects
+triggers.YaoiHelper/BuildRegion.placements.name.build_region=Build Allowed Region
 
 entities.YaoiHelper/HDShaderController.placements.name.hd_shader_controller=HD Shader Controller
+entities.YaoiHelper/BuildController.placements.name.build_controller=Build Controller

@@ -48,6 +48,7 @@ public static class HDShaderHandler {
 	private static void renderPlayerToTempA(Level level) {
 		if (level.Tracker.CountEntities<HDShaderController>() == 0) return;
 		if (!level.Tracker.GetEntity<HDShaderController>().RenderPlayerOver) return;
+
 		Engine.Graphics.GraphicsDevice.SetRenderTarget(GameplayBuffers.TempA);
 		Engine.Graphics.GraphicsDevice.Clear(Color.Transparent);
 		Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, null, level.Camera.Matrix);
@@ -64,8 +65,6 @@ public static class HDShaderHandler {
 				}
 			}
 		}
-
-		// level.Entities.FindAll<TrailManager>().ForEach(tm => tm.Render());
 
 		if (Engine.Commands.Open) {
 			level.Entities.DebugRender(level.Camera);
@@ -85,7 +84,7 @@ public static class HDShaderHandler {
 		eff.Parameters["Dimensions"].SetValue(new Vector2(1920, 1080));
 
 		// Go my jank
-		// TODO: 1920x1080 works on my other computer, Engine.Viewport works on this computer
+		// XXX: 1920x1080 works on my other computer, Engine.Viewport works on this computer
 		eff.Parameters["ViewMatrix"].SetValue(target == null ? Matrix.CreateOrthographicOffCenter(0, Engine.Viewport.Width, Engine.Viewport.Height, 0, 0, 1) : Matrix.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, 1));
 		eff.Parameters["TransformMatrix"].SetValue(Matrix.Identity);
 

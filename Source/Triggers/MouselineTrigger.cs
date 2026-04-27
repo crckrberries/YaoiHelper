@@ -27,7 +27,7 @@ public class MouselineTrigger(EntityData data, Vector2 offset) : Trigger(data, o
 
 	public override void Update() {
 		base.Update();
-		mousePos = new Vector2(MInput.Mouse.X - Engine.Viewport.X, MInput.Mouse.Y - Engine.Viewport.Y) / 6 + SceneAs<Level>().LevelOffset;
+		mousePos = SceneAs<Level>().ScreenToWorld(new Vector2(MInput.Mouse.X - Engine.Viewport.X, MInput.Mouse.Y - Engine.Viewport.Y));
 
 	}
 

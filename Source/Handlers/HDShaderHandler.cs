@@ -81,6 +81,7 @@ public static class HDShaderHandler {
 		Effect eff = shader.Effect;
 		eff.Parameters["Time"].SetValue(level.TimeActive);
 		eff.Parameters["CamPos"].SetValue(level.Camera.Position);
+		eff.Parameters["PlayerPos"].SetValue(level.Tracker.CountEntities<Player>() > 0 ? level.Tracker.GetEntity<Player>().Position : new Vector2(-1, -1));
 		eff.Parameters["Dimensions"].SetValue(new Vector2(1920, 1080));
 
 		// Go my jank
@@ -161,16 +162,18 @@ public static class HDShaderHandler {
 			}
 
 			Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, passShaderParams(shaders[i], level, target), Engine.ScreenMatrix);
-			Draw.SpriteBatch.Draw((RenderTarget2D)source, Vector2.Zero, source.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+			Draw.SpriteBatch.Draw(source, Vector2.Zero, source.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
 			Draw.SpriteBatch.End();
-
 		}
 
 		// render player over
-		// TODO: should this just be a shader mask
-		if (!level.Tracker.GetEntity<HDShaderController>().RenderPlayerOver) return;
+		if (!(controller.RenderPlayerOver || controller.RenderLevelOver)) return;
 		Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.CreateScale(6f) * Engine.ScreenMatrix);
-		Draw.SpriteBatch.Draw((RenderTarget2D)GameplayBuffers.TempA, vector3 + vector4, GameplayBuffers.Level.Bounds, Color.White, 0f, vector3, scale, SpriteEffects.None, 0f);
+		if (controller.RenderLevelOver) {
+			Draw.SpriteBatch.Draw((RenderTarget2D)GameplayBuffers.Gameplay, vector3 + vector4, GameplayBuffers.Level.Bounds, Color.White, 0f, vector3, scale, SpriteEffects.None, 0f);
+		} else {
+			Draw.SpriteBatch.Draw((RenderTarget2D)GameplayBuffers.TempA, vector3 + vector4, GameplayBuffers.Level.Bounds, Color.White, 0f, vector3, scale, SpriteEffects.None, 0f);
+		}
 		Draw.SpriteBatch.End();
 	}
 			

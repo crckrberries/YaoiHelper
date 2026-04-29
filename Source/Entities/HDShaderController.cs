@@ -13,12 +13,14 @@ namespace Celeste.Mod.YaoiHelper.Entities;
 [Tracked]
 public class HDShaderController : Entity {
 	public bool RenderPlayerOver;
+	public bool RenderLevelOver;
 
 	private List<VirtualRenderTarget> mask_groups;
 
 	public HDShaderController(EntityData data, Vector2 offset) : base() {
 		Visible = false;
 		RenderPlayerOver = data.Bool("render_player_over");
+		RenderLevelOver = data.Bool("render_level_over");
 	}
 
 	public override void Awake(Scene scene) {

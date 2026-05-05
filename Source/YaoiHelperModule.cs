@@ -34,6 +34,7 @@ public class YaoiHelperModule : EverestModule {
     public override void Load() {
 		HDShaderHandler.ApplyHooks();
 		DisableGlitchTrigger.ApplyHooks();
+		// TODO add a toggle for this 
 		// Everest.Events.Level.OnLoadLevel += static (Level level, Player.IntroTypes introType, bool fromLoader) => {
 		// 	level.Add(new BuildController(new EntityData(), new Vector2(0, 0)));
 		// };

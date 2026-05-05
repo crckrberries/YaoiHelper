@@ -49,7 +49,7 @@ float fbm(float3 x) {
 float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 {
 	float2 R = Dimensions.xy;
-	float n = fbm(float3((float2(uv.x  * Dimensions.x /* + Time * iResolution.x / 10. */, uv.y * Dimensions.y) /* + iMouse.xy / 5. */ ) * 2./R.y, .05 * Time)), v = sin(6.28 * 20. * n), t = Time;
+	float n = fbm(float3((float2(uv.x  * Dimensions.x /* + Time * iResolution.x / 10. */, uv.y * Dimensions.y) + CamPos /* + iMouse.xy / 5. */ ) * 2./R.y, .05 * Time)), v = sin(6.28 * 20. * n), t = Time;
 	
 	v = smoothstep(.5, 0., .25 * abs(v)/fwidth(v));
 

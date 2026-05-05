@@ -79,15 +79,15 @@ public static class HDShaderHandler {
 
 	private static Effect passShaderParams(Shader shader, Level level, RenderTarget2D target) {
 		Effect eff = shader.Effect;
-		eff.Parameters["Time"].SetValue(level.TimeActive);
-		eff.Parameters["CamPos"].SetValue(level.Camera.Position);
-		eff.Parameters["PlayerPos"].SetValue(level.Tracker.CountEntities<Player>() > 0 ? level.Tracker.GetEntity<Player>().Position : new Vector2(-1, -1));
-		eff.Parameters["Dimensions"].SetValue(new Vector2(1920, 1080));
+		eff.Parameters["Time"]?.SetValue(level.TimeActive);
+		eff.Parameters["CamPos"]?.SetValue(level.Camera.Position);
+		eff.Parameters["PlayerPos"]?.SetValue(level.Tracker.CountEntities<Player>() == 1 ? level.Tracker.GetEntity<Player>().Position : new Vector2(-1, -1));
+		eff.Parameters["Dimensions"]?.SetValue(new Vector2(1920, 1080));
 
 		// Go my jank
 		// XXX: 1920x1080 works on my other computer, Engine.Viewport works on this computer
-		eff.Parameters["ViewMatrix"].SetValue(target == null ? Matrix.CreateOrthographicOffCenter(0, Engine.Viewport.Width, Engine.Viewport.Height, 0, 0, 1) : Matrix.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, 1));
-		eff.Parameters["TransformMatrix"].SetValue(Matrix.Identity);
+		eff.Parameters["ViewMatrix"]?.SetValue(target == null ? Matrix.CreateOrthographicOffCenter(0, Engine.Viewport.Width, Engine.Viewport.Height, 0, 0, 1) : Matrix.CreateOrthographicOffCenter(0, target.Width, target.Height, 0, 0, 1));
+		eff.Parameters["TransformMatrix"]?.SetValue(Matrix.Identity);
 
 		// TODO TODO TODO TODO TODO AUGHHAHGHAHHGHHAHGHAH
 		for (int i = 0; i < shader.MaskGroups.Length; i++) {

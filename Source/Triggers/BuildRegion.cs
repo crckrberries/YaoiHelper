@@ -4,6 +4,7 @@ using Monocle;
 
 namespace Celeste.Mod.YaoiHelper.Triggers;
 
+// TODO: this should probably be an entity
 [CustomEntity($"{nameof(YaoiHelper)}/{nameof(BuildRegion)}")]
 [Tracked]
 public sealed class BuildRegion : Trigger {
@@ -11,16 +12,16 @@ public sealed class BuildRegion : Trigger {
 		Visible = true;
 	}
 
-	public override void Render() {
-		base.Render();
-
-		// TODO this is ugly
-		for (int i = (int)Collider.AbsoluteLeft; i <= Collider.AbsoluteRight; i += 8) {
-			Draw.Line(i, Collider.AbsoluteTop, i, Collider.AbsoluteBottom, Color.Gray);
-		}
-		for (int i = (int)Collider.AbsoluteTop; i <= Collider.AbsoluteBottom; i += 8) {
-			Draw.Line(Collider.AbsoluteLeft, i, Collider.AbsoluteRight, i, Color.Gray);
-		}
-		
-	}
+	// public override void Render() {
+	// 	base.Render();
+	//
+	// 	// TODO this is ugly
+	// 	for (int i = (int)Collider.AbsoluteLeft; i <= Collider.AbsoluteRight; i += 8) {
+	// 		Draw.Line(i, Collider.AbsoluteTop, i, Collider.AbsoluteBottom, Color.Gray);
+	// 	}
+	// 	for (int i = (int)Collider.AbsoluteTop; i <= Collider.AbsoluteBottom; i += 8) {
+	// 		Draw.Line(Collider.AbsoluteLeft, i, Collider.AbsoluteRight, i, Color.Gray);
+	// 	}
+	//
+	// }
 }

@@ -8,6 +8,7 @@ using Monocle;
 
 namespace Celeste.Mod.YaoiHelper.Triggers;
 
+// TODO: this should probably be an entity
 [CustomEntity("YaoiHelper/ShaderMask")]
 [Tracked]
 public sealed class ShaderMask(EntityData data, Vector2 offset) : Trigger(data, offset), IShaderMask {

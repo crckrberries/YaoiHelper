@@ -32,7 +32,6 @@ public class HDShaderController : Entity {
 		}
 	}
 
-
 	private void AddMaskGroup(string name) {
 		if (mask_groups.Select(x => x.Name).Contains($"hd-shader-mask-{name}")) return;
 		mask_groups.Add(VirtualContent.CreateRenderTarget($"hd-shader-mask-{name}", 1920, 1080));

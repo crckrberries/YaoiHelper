@@ -2,7 +2,7 @@ local HDShaderTrigger = {}
 
 HDShaderTrigger.name = "YaoiHelper/HDShaderTrigger"
 HDShaderTrigger.placements = {
-	name = "hd_shader",
+	name = "main",
 	data = {
 		effects = "",
 		mask_groups = "",

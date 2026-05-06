@@ -2,7 +2,7 @@ local mouselineTrigger = {}
 
 mouselineTrigger.name = "YaoiHelper/MouselineTrigger"
 mouselineTrigger.placements = {
-	name = "mouseline_trigger",
+	name = "main",
 	data = {
 		fling = true,
 		allow_dashing=true

@@ -3,7 +3,7 @@ local windowFollowPlayerTrigger = {}
 
 windowFollowPlayerTrigger.name = "YaoiHelper/WindowFollowPlayerTrigger"
 windowFollowPlayerTrigger.placements = {
-	name = "window_follow_player",
+	name = "main",
 	data = {
 		zoom_level = 6;
 	}

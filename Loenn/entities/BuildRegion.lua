@@ -2,7 +2,11 @@ local buildRegion = {}
 
 buildRegion.name = "YaoiHelper/BuildRegion"
 buildRegion.placements = {
-	name = "build_region"
+	name = "main",
+	data = {
+		width = 16,
+		height = 16,
+	}
 }
 
 return buildRegion;

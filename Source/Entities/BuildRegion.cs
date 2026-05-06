@@ -4,12 +4,11 @@ using Monocle;
 
 namespace Celeste.Mod.YaoiHelper.Triggers;
 
-// TODO: this should probably be an entity
 [CustomEntity($"{nameof(YaoiHelper)}/{nameof(BuildRegion)}")]
 [Tracked]
-public sealed class BuildRegion : Trigger {
-	public BuildRegion(EntityData data, Vector2 offset) : base(data, offset) {
-		Visible = true;
+public sealed class BuildRegion : Entity {
+	public BuildRegion(EntityData data, Vector2 offset) : base(data.Position + offset) {
+		Collider = new Hitbox(data.Width, data.Height);
 	}
 
 	// public override void Render() {

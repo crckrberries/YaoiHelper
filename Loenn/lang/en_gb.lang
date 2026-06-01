@@ -4,7 +4,7 @@ triggers.YaoiHelper/MinimizeGame.placements.description.main=Minimizes the game.
 triggers.YaoiHelper/HDShader.placements.name.main=HD Shader
 triggers.YaoiHelper/HDShader.placements.description.main=Applies a high-resolution (1920x1080) shader to the game.\nRequires a HD Shader Controller to function.
 triggers.YaoiHelper/HDShader.attributes.description.effects=A comma-seperated list of shaders this trigger should load, relative to Effects and sans file extension.\nIf your shader is in `Effects/mymodname/myshader.cso`, put `mymodname/myshader` here.
-triggers.YaoiHelper/HDShader.attributes.description.mask_groups=A sequential (TODO) list of the mask groups to pass to the shader.
+triggers.YaoiHelper/HDShader.attributes.description.textures=A list of textures to pass to your shader. Format is <textureslot>:<prefix><identifier>\nThe available prefixes are `%` for mask groups, `$` for GameplayBuffers, and `%` for files.\nThe identifier for mask groups is the name of the mask group as defined in the Shader Mask.\nThe identifier for files is the path to the file relative to Graphics/Atlases/Gameplay.
 triggers.YaoiHelper/HDShader.attributes.description.flag=If this is populated, the shader will only display when the flag is set.
 triggers.YaoiHelper/HDShader.attributes.description.always_active=Whether the shader should always be active regardless of whether the player is inside it or not.
 

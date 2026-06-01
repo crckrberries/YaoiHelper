@@ -38,8 +38,8 @@ public sealed class HDShaderController : Entity {
 		maskGroups.Remove(maskGroups.First(x => x.Name == $"hd-shader-mask-{name}"));
 	}
 
-	public VirtualRenderTarget GetMaskGroupTarget(string name) {
-		return maskGroups.FirstOrDefault(x => x?.Name == $"hd-shader-mask-{name}", null) ?? throw new KeyNotFoundException("No matching mask group found");
+	public VirtualRenderTarget? GetMaskGroupTarget(string name) {
+		return maskGroups.FirstOrDefault(x => x?.Name == $"hd-shader-mask-{name}", null);
 	}
 }
 

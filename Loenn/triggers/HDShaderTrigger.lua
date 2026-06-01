@@ -5,7 +5,7 @@ HDShaderTrigger.placements = {
 	name = "main",
 	data = {
 		effects = "",
-		mask_groups = "",
+		textures = "",
 		flag = "",
 		always_active=false
 	}

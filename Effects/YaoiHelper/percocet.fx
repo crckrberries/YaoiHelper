@@ -1,8 +1,26 @@
+#define DECLARE_TEXTURE(Name, index) \
+    texture Name: register(t##index); \
+    sampler Name##Sampler: register(s##index)
+
+#define SAMPLE_TEXTURE(Name, texCoord) tex2D(Name##Sampler, texCoord)
+
+uniform float Time; // level.TimeActive
+uniform float2 CamPos; // level.Camera.Position
+uniform float2 Dimensions; // new Vector2(320, 180)
+
+uniform float4x4 TransformMatrix;
+uniform float4x4 ViewMatrix;
+
+float4 permute(float4 x){return fmod(((x*34.0)+1.0)*x, 289.0);}
+float4 taylorInvSqrt(float4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+
+// ported from GLSL to HLSL
 float hash( float n ) {
 	return frac(sin(n)*43758.5453);
 }
 
 float noise( float3 x ) {
+	// The noise function returns a value in the range -1.0f -> 1.0f
 	float3 p = floor(x);
 	float3 f = frac(x);
 
@@ -19,7 +37,7 @@ float fbm(float3 x) {
 	float v = 0.0;
 	float a = 0.5;
 	float3 shift = float3(100, 0, 0);
-	for (int i = 0; i < 10; ++i) {
+	for (int i = 0; i < 3; ++i) {
 		v += a * noise(x);
 		x = x * 2.0 + shift;
 		a *= 0.5;
@@ -27,33 +45,18 @@ float fbm(float3 x) {
 	return v;
 }
 
-#define DECLARE_TEXTURE(Name, index) \
-    texture Name: register(t##index); \
-    sampler Name##Sampler: register(s##index)
-
-#define SAMPLE_TEXTURE(Name, texCoord) tex2D(Name##Sampler, texCoord)
-
-uniform float Time; // level.TimeActive
-uniform float2 CamPos; // level.Camera.Position
-uniform float2 Dimensions; // new Vector2(320, 180)
-
-uniform float4x4 ViewMatrix;
-uniform float4x4 TransformMatrix;
-
 DECLARE_TEXTURE(text, 0);
-DECLARE_TEXTURE(exclude_mask, 1);
-DECLARE_TEXTURE(reverse_mask, 2);
+DECLARE_TEXTURE(mask, 1);
 
 float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 {
-	float t = Time * (SAMPLE_TEXTURE(reverse_mask, uv).r - .5) * -2;
-	float3 p = float3(float2(uv.x * 2.5 + .5 * t, uv.y * 2.5) + CamPos / Dimensions, .5 * t);
-	float n = fbm(p + fbm(p + fbm(p + fbm(p))));
+	float2 R = Dimensions.xy;
+	float n = fbm(float3((float2(uv.x  * Dimensions.x /* + Time * iResolution.x / 10. */, uv.y * Dimensions.y) + CamPos /* + iMouse.xy / 5. */ ) * 2./R.y, .05 * Time)), v = sin(6.28 * 20. * n), t = Time;
+	
+	v = abs(v);
 
-	float4 fg = float4(1., 1., 1., 1.);
-
-	return lerp(float4(0., 0., 0., 1.), lerp(fg, SAMPLE_TEXTURE(text, uv), SAMPLE_TEXTURE(exclude_mask, uv).r), n * 1);
-}
+	return lerp(lerp(float4(0., 0., 0., 1.), float4(1., 0., 0., 1.), v), SAMPLE_TEXTURE(text, uv), SAMPLE_TEXTURE(mask, uv)); 
+	}
 
 void SpriteVertexShader(inout float4 color    : COLOR0,
                         inout float2 texCoord : TEXCOORD0,

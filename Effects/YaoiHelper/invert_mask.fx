@@ -12,7 +12,7 @@ uniform float4x4 ViewMatrix;
 uniform float4x4 TransformMatrix;
 
 DECLARE_TEXTURE(text, 0);
-DECLARE_TEXTURE(mask, 3);
+DECLARE_TEXTURE(mask, 1);
 
 float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 {

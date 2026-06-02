@@ -19,7 +19,7 @@ public static class HDShaderHandler {
 		VirtualContent.CreateRenderTarget("hd-shader-flip", 1920, 1080),
 		VirtualContent.CreateRenderTarget("hd-shader-flop", 1920, 1080),
 	};
-			
+	
 	internal static void ApplyHooks() {
 		IL.Celeste.Level.Render += IL_LevelRender_ApplyShader;
 	}
@@ -141,7 +141,7 @@ public static class HDShaderHandler {
 			Engine.Graphics.GraphicsDevice.Viewport = Engine.Viewport;
 		}
 
-		Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.CreateScale(6f) * (applyShaders ? Matrix.Identity : Engine.ScreenMatrix));
+		Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, applyShaders ? null : ColorGrade.Effect, Matrix.CreateScale(6f) * (applyShaders ? Matrix.Identity : Engine.ScreenMatrix));
 		Draw.SpriteBatch.Draw((RenderTarget2D)GameplayBuffers.Level, vector3 + vector4, GameplayBuffers.Level.Bounds, Color.White, 0f, vector3, scale, SpriteEffects.None, 0f);
 		Draw.SpriteBatch.End();
 
@@ -149,6 +149,11 @@ public static class HDShaderHandler {
 		
 		List<IShaderMask> shaderMasks = level.Tracker.GetEntities<ShaderMask>().Cast<IShaderMask>().ToList();
 		List<string> maskGroups = shaderMasks.SelectMany(x => x.MaskGroups).ToList();
+
+		Texture[] colorgradeTextures = new Texture[2] {
+			Engine.Graphics.GraphicsDevice.Textures[1],
+			Engine.Graphics.GraphicsDevice.Textures[2]
+		};
 
 		foreach (string group in maskGroups) {
 			Engine.Graphics.GraphicsDevice.SetRenderTarget(controller.GetMaskGroupTarget(group));
@@ -182,13 +187,18 @@ public static class HDShaderHandler {
 				Engine.Graphics.GraphicsDevice.Viewport = Engine.Viewport;
 			}
 
+			if (target == origTarget) {
+				Engine.Graphics.GraphicsDevice.Textures[1] = colorgradeTextures[0];
+				Engine.Graphics.GraphicsDevice.Textures[2] = colorgradeTextures[1];
+			}
+
 			Draw.SpriteBatch.Begin(
 				SpriteSortMode.Deferred,
 				BlendState.AlphaBlend,
 				SamplerState.PointClamp,
 				DepthStencilState.Default,
 				RasterizerState.CullNone,
-				target == origTarget ? null : passShaderParams(shaders[i], level, target ?? throw new InvalidOperationException("expected nonnull target if it's not orig"), controller),
+				target == origTarget ? ColorGrade.Effect : passShaderParams(shaders[i], level, target ?? throw new InvalidOperationException("expected nonnull target if it's not orig"), controller),
 				target == null ? Engine.ScreenMatrix : Matrix.Identity
 			);
 			Draw.SpriteBatch.Draw(source, Vector2.Zero, source.Bounds, Color.White, 0f, Vector2.Zero, 1f, target == origTarget && SaveData.Instance.Assists.MirrorMode ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);

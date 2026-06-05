@@ -7,6 +7,9 @@ csharp_new_line_before_open_brace = false
 # shut up collection expression
 dotnet_style_prefer_collection_expression = never:none
 
+# explicit type over `new()`
+csharp_style_implicit_object_creation_when_type_is_apparent = false:warning
+
 # PascalCase for public/internal/protected/protected internal
 dotnet_naming_rule.public_internal_members_pascal.severity = suggestion
 dotnet_naming_rule.public_internal_members_pascal.symbols = public_internal_members
@@ -28,3 +31,4 @@ dotnet_naming_symbols.private_members.applicable_accessibilities = private, priv
 dotnet_naming_symbols.private_members.required_modifiers =
 
 dotnet_naming_style.camel_case.capitalization = camel_case
+

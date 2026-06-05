@@ -1,5 +1,4 @@
 using Monocle;
-using System.IO;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
@@ -13,58 +12,12 @@ namespace Celeste.Mod.YaoiHelper.Handlers;
  */
 [Submodule]
 public static class YaoiLogger {
-    private static readonly string logPath = Path.Combine(Everest.PathGame, "YaoiLog.txt");
-    
     internal static void ApplyHooks() {
         Everest.Events.LevelLoader.OnLoadingThread += On_LoadingThread_AddLogDisplay;
     }
 
     internal static void RemoveHooks() {
         Everest.Events.LevelLoader.OnLoadingThread -= On_LoadingThread_AddLogDisplay;
-    }
-    
-    public static void ClearLog() {
-        LogDisplay.Content = new List<string>();
-        if (!File.Exists(logPath)) return;
-        using (StreamWriter sw = File.CreateText(logPath)) {
-            sw.Write(string.Empty);
-            sw.Close();
-        }
-    }
-    
-    public static void Log(LogLevel level, string tag, string message) {
-        string logMessage = $"[{tag}] [{level.ToString()}] {message}";
-        string fullLogMessage = $"({System.DateTime.Now}) {logMessage}";
-        Logger.Log(level, tag, message);
-        LogDisplay.AddLog(logMessage);
-        using (StreamWriter sw = File.AppendText(logPath)) {
-            sw.WriteLine(fullLogMessage);
-            sw.Close();
-        }
-    }
-    
-    public static void Log(string tag, string message) {
-        Log(LogLevel.Verbose, tag, message);
-    }
-
-    public static void Verbose(string tag, string message) {
-        Log(LogLevel.Verbose, tag, message);
-    }
-
-    public static void Debug(string tag, string message) {
-        Log(LogLevel.Debug, tag, message);
-    }
-
-    public static void Info(string tag, string message) {
-        Log(LogLevel.Info, tag, message);
-    }
-
-    public static void Warn(string tag, string message) {
-        Log(LogLevel.Warn, tag, message);
-    }
-
-    public static void Error(string tag, string message) {
-        Log(LogLevel.Error, tag, message);
     }
 
     internal static void On_LoadingThread_AddLogDisplay(Level level) {
@@ -87,7 +40,7 @@ public sealed class LogDisplay : Entity {
 
     public static void AddLog(string log) {
         if (ActiveFont.Measure(log).X * fontSize + padding.X * 2 > maxWidth) {
-            YaoiLogger.Warn($"{nameof(YaoiHelper)}/{nameof(LogDisplay)}","Line was too long to display! Check YaoiLog.txt");
+            //TODO figure out what the fuck to do with this
             return;
         }
         if(Content.Count == maxLines) Content.RemoveAt(0);

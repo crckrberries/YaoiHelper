@@ -21,6 +21,7 @@
 		<PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.1" PrivateAssets="all" ExcludeAssets="runtime" />
 		<PackageReference Include="MonoMod.Patcher" Version="25.0.0-prerelease.2" />
 		<PackageReference Include="CelesteAnalyzer" Version="*" />
+		<PackageReference Include="YamlDotNet" Version="18.0.0" />
 		<ProjectReference Include="../Analyzer/YaoiHelper.Analyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 

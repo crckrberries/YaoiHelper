@@ -15,6 +15,14 @@ namespace Celeste.Mod.YaoiHelper.Handlers;
 public static class YaoiLogger {
     private static readonly string logPath = Path.Combine(Everest.PathGame, "YaoiLog.txt");
     
+    internal static void ApplyHooks() {
+        Everest.Events.LevelLoader.OnLoadingThread += On_LoadingThread_AddLogDisplay;
+    }
+
+    internal static void RemoveHooks() {
+        Everest.Events.LevelLoader.OnLoadingThread -= On_LoadingThread_AddLogDisplay;
+    }
+    
     public static void ClearLog() {
         LogDisplay.Content = new List<string>();
         if (!File.Exists(logPath)) return;
@@ -59,15 +67,7 @@ public static class YaoiLogger {
         Log(LogLevel.Error, tag, message);
     }
 
-    internal static void ApplyHooks() {
-        Everest.Events.LevelLoader.OnLoadingThread += OnLoadingThread_AddLogDisplay;
-    }
-
-    internal static void RemoveHooks() {
-        Everest.Events.LevelLoader.OnLoadingThread -= OnLoadingThread_AddLogDisplay;
-    }
-
-    internal static void OnLoadingThread_AddLogDisplay(Level level) {
+    internal static void On_LoadingThread_AddLogDisplay(Level level) {
         level.Add(new LogDisplay());
     }
 }

@@ -21,6 +21,7 @@ public static class BuildHandler {
 	public static BuildMode Mode { get; private set; } = BuildMode.Tiles;
 	public static Vector2 MousePos { get; private set; }
 	private static float modeSwitchDoubleTapTimer = 0f;
+	public static bool AllowEntityMode { get; set; }
 
 	public static bool BuildRoom(string level) => tileModifications.ContainsKey(level) || Mode == BuildMode.Entities;
 
@@ -101,6 +102,8 @@ public static class BuildHandler {
 		} else {
 			modeSwitchDoubleTapTimer = (modeSwitchDoubleTapTimer > 0) ? modeSwitchDoubleTapTimer - Engine.DeltaTime : 0;
 		}
+
+		Mode = (!Unlimited && !AllowEntityMode) ? BuildMode.Tiles : Mode;
 
         MouseState state = MInput.Mouse.CurrentState;
         MousePos = level.ScreenToWorld(new Vector2(MInput.Mouse.X - Engine.Viewport.X, MInput.Mouse.Y - Engine.Viewport.Y));

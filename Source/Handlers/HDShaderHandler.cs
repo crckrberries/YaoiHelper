@@ -12,7 +12,6 @@ using MonoMod.Cil;
 
 namespace Celeste.Mod.YaoiHelper.Handlers;
 
-// TODO: maybe make this a renderer?
 [Submodule]
 public static class HDShaderHandler {
 	private static readonly List<VirtualRenderTarget> flipflop_targets = new(2) { 
@@ -62,11 +61,11 @@ public static class HDShaderHandler {
 			string value = shader.Textures[i].Split(':')[1].TrimStart();
 
 			Engine.Graphics.GraphicsDevice.Textures[slot] = value.ToCharArray()[0] switch {
-				'%' => controller.GetMaskGroupTarget(value[1..]) ?? throw new KeyNotFoundException("mask group specified in HD shader not found"),
-				'/' => GFX.Game.GetOrDefault(value[1..], null)?.Texture.Texture_Safe ?? throw new KeyNotFoundException("texture specified in HD shader not found"),
-				'$' => (VirtualRenderTarget?)typeof(GameplayBuffers).GetField(value[1..])?.GetValue(null) ?? throw new KeyNotFoundException("GameplayBuffer specified in HD shader not found"),
-				'#' => SpecialBuffers.Get(value[1..]) ?? throw new KeyNotFoundException("special buffer specified in HD shader not found"),
-				_ => /* null ?? */ throw new KeyNotFoundException("invalid prefix - valid ones are '%' for mask groups, $ for GameplayBuffers, # for special buffers and '/' for texture files"),
+				'%' => controller.GetMaskGroupTarget(value[1..]) ?? throw new ArgumentException($"mask group {value[1..]} specified in HD shader not found"),
+				'/' => GFX.Game.GetOrDefault(value[1..], null)?.Texture.Texture_Safe ?? throw new ArgumentException($"texture {value[1..]} specified in HD shader not found"),
+				'$' => (VirtualRenderTarget?)typeof(GameplayBuffers).GetField(value[1..])?.GetValue(null) ?? throw new ArgumentException($"GameplayBuffer {value[1..]} specified in HD shader not found"),
+				'#' => SpecialBuffers.Get(value[1..]) ?? throw new ArgumentException($"special buffer {value[1..]} specified in HD shader not found"),
+				_ => throw new ArgumentException($"invalid prefix '{value[0]}' - valid ones are '%' for mask groups, '$' for GameplayBuffers, '#' for special buffers and '/' for texture files"),
 			};
 		}
 	}

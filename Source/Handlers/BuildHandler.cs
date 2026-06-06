@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -19,6 +20,7 @@ public enum BuildMode {
 public static class BuildHandler {
 	public static BuildMode Mode { get; private set; } = BuildMode.Tiles;
 	public static Vector2 MousePos { get; private set; }
+	private static float modeSwitchDoubleTapTimer = 0f;
 
 	public static bool BuildRoom(string level) => tileModifications.ContainsKey(level) || Mode == BuildMode.Entities;
 
@@ -44,34 +46,44 @@ public static class BuildHandler {
 
 	// entity stuff
 	// ---------------------------------------------------------------------------
-	public static bool DragSelecting { get; private set; } = false;
 	public static List<Entity> Selection { get; private set; } = [];
+
+	public static bool DragSelecting { get; private set; } = false;
 	public static Hitbox? DragSelectBox { get; private set; }
+	private static float? dragSelectionSwitchoverX, dragSelectionSwitchoverY = null;
 
 	public static bool Dragging { get; private set; } = false;
 	private static Vector2 dragOrigin;
 	private static int dragSnapThreshold = 8; 
+
+	// public static List<Entity>? Clipboard { get; private set; }
+	// public static Vector2? CopyLocation { get; private set; } = null;
 	// ---------------------------------------------------------------------------
 	// entity stuff
 	
 	internal static void ApplyHooks() {
 		On.Celeste.Level.Update += On_LevelUpdate_Build;
 		Everest.Events.LevelLoader.OnLoadingThread += OnLoadingThread_AddCursorDisplayAndClearBuilds;
+		Everest.Events.Level.OnLoadLevel += OnLoadLevel_ClearEntitySelection;
 	}
 
 	internal static void RemoveHooks() {
 		On.Celeste.Level.Update -= On_LevelUpdate_Build;
 		Everest.Events.LevelLoader.OnLoadingThread -= OnLoadingThread_AddCursorDisplayAndClearBuilds;
+		Everest.Events.Level.OnLoadLevel -= OnLoadLevel_ClearEntitySelection;
 	}
 
 	public static void ResetTileModifications() {
 		tileModifications = [];
-		Selection = [];
 	}
 
-	public static void ResetTileModifications(string level) {
-		tileModifications[level] = [];
-		Selection = [];
+	public static void OnLoadLevel_ClearEntitySelection(Level level, Player.IntroTypes introTypes, bool isFromLoader) {
+		Selection.Clear();
+	}
+
+	internal static void OnLoadingThread_AddCursorDisplayAndClearBuilds(Level level) {
+        ResetTileModifications();
+		level.Add(new BuildCursorDisplay());
 	}
 
 	internal static void On_LevelUpdate_Build(On.Celeste.Level.orig_Update orig, Level level) {
@@ -81,7 +93,13 @@ public static class BuildHandler {
 
 		// TODO don't hardcode the key
 		if (MInput.Keyboard.Pressed(Keys.LeftControl)) {
-			Mode = (Mode == BuildMode.Entities) ? BuildMode.Tiles : BuildMode.Entities;
+			modeSwitchDoubleTapTimer += 1;
+			if (modeSwitchDoubleTapTimer > 1) {
+				Mode = (Mode == BuildMode.Entities) ? BuildMode.Tiles : BuildMode.Entities;
+				modeSwitchDoubleTapTimer = 0;
+			}
+		} else {
+			modeSwitchDoubleTapTimer = (modeSwitchDoubleTapTimer > 0) ? modeSwitchDoubleTapTimer - Engine.DeltaTime : 0;
 		}
 
         MouseState state = MInput.Mouse.CurrentState;
@@ -100,16 +118,20 @@ public static class BuildHandler {
 
 		if (DragSelecting) {
 			DragSelectBox ??= new Hitbox(0, 0, MousePos.X, MousePos.Y);
-			if (DragSelectBox.AbsoluteX < MousePos.X) {
+			if ((dragSelectionSwitchoverX ?? DragSelectBox.AbsoluteX) < MousePos.X) {
+				dragSelectionSwitchoverX = null;
 				DragSelectBox.Width = MousePos.X - DragSelectBox.AbsoluteX;
 			} else {
+				dragSelectionSwitchoverX ??= DragSelectBox.Position.X;
 				DragSelectBox.Width += DragSelectBox.AbsoluteX - MousePos.X;
 				DragSelectBox.Position = new Vector2(MousePos.X, DragSelectBox.AbsoluteY);
 			}
 
-			if (DragSelectBox.AbsoluteY < MousePos.Y) {
+			if ((dragSelectionSwitchoverY ?? DragSelectBox.AbsoluteY) < MousePos.Y) {
+				dragSelectionSwitchoverY = null;
 				DragSelectBox.Height = MousePos.Y - DragSelectBox.AbsoluteY;
 			} else {
+				dragSelectionSwitchoverY ??= DragSelectBox.Position.Y;
 				DragSelectBox.Height += DragSelectBox.AbsoluteY - MousePos.Y;
 				DragSelectBox.Position = new Vector2(DragSelectBox.AbsoluteX, MousePos.Y);
 			}
@@ -142,8 +164,26 @@ public static class BuildHandler {
 
 		if (MInput.Keyboard.Pressed(Keys.Back)) {
 			Selection.ForEach(x => level.Remove(x));
-			Selection = [];
+			Selection.Clear();
 		}
+
+		// if (MInput.Keyboard.Check(Keys.LeftControl)) {
+		// 	if (MInput.Keyboard.Pressed(Keys.C) || MInput.Keyboard.Pressed(Keys.X)) {
+		// 		Clipboard = Selection;
+		// 		CopyLocation = MousePos;
+		// 		if (MInput.Keyboard.Pressed(Keys.X)) {
+		// 			Selection.ForEach(x => level.Remove(x));
+		// 			Selection.Clear();
+		// 		}
+		// 	}
+		//
+		// 	if (MInput.Keyboard.Pressed(Keys.V) && Clipboard is not null) {
+		// 		foreach (Entity entity in Clipboard) {
+		// 			// this is so fucking broken
+		// 			level.Add((Entity)Activator.CreateInstance(entity.GetType(), new object[2] { entity.SourceData, entity.Position + (MousePos - CopyLocation)}) ?? throw new Exception("mrrow"));
+		// 		}
+		// 	}
+		// }
 
 		return true;
 	}
@@ -226,11 +266,6 @@ public static class BuildHandler {
 				level.SolidTiles.Tiles.Tiles[tile.X + i, tile.Y + j] = genned.TileGrid.Tiles[i + radius, j + radius];
 			}
 		}
-	}
-
-	internal static void OnLoadingThread_AddCursorDisplayAndClearBuilds(Level level) {
-        ResetTileModifications();
-		level.Add(new BuildCursorDisplay());
 	}
 }
 

@@ -122,7 +122,7 @@ public static class BuildHandler {
 				dragSelectionSwitchoverX = null;
 				DragSelectBox.Width = MousePos.X - DragSelectBox.AbsoluteX;
 			} else {
-				dragSelectionSwitchoverX ??= DragSelectBox.Position.X;
+				dragSelectionSwitchoverX ??= DragSelectBox.AbsoluteX;
 				DragSelectBox.Width += DragSelectBox.AbsoluteX - MousePos.X;
 				DragSelectBox.Position = new Vector2(MousePos.X, DragSelectBox.AbsoluteY);
 			}
@@ -131,13 +131,14 @@ public static class BuildHandler {
 				dragSelectionSwitchoverY = null;
 				DragSelectBox.Height = MousePos.Y - DragSelectBox.AbsoluteY;
 			} else {
-				dragSelectionSwitchoverY ??= DragSelectBox.Position.Y;
+				dragSelectionSwitchoverY ??= DragSelectBox.AbsoluteY;
 				DragSelectBox.Height += DragSelectBox.AbsoluteY - MousePos.Y;
 				DragSelectBox.Position = new Vector2(DragSelectBox.AbsoluteX, MousePos.Y);
 			}
 		} else if (DragSelectBox is not null) {
 			Selection = level.Entities.Where(x => x.Collider is not null && x is not SolidTiles && x is not Player && x is not Trigger).Where(x => DragSelectBox.Collide(x.Collider)).ToList();
 			DragSelectBox = null;
+			dragSelectionSwitchoverX = dragSelectionSwitchoverY = null;
 		}
 
 		if (Selection.Any(x => new Hitbox(1, 1, MousePos.X, MousePos.Y).Collide(x.Collider))) {

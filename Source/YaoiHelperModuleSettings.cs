@@ -7,8 +7,8 @@ public sealed class YaoiHelperModuleSettings : EverestModuleSettings {
 	public bool BuildAnywhere { get; set; }
 
 	[SettingSubMenu]
-	public class SubMenu0 {
-		public bool DisplayLog { get; set; }
+	public class LogSubMenu {
+		public bool Enabled { get; set; }
 		[SettingRange(min:0,max:100)]
 		public int LogLifespan { get; set; } = 20;
 		[SettingMinLength(1)]
@@ -25,5 +25,5 @@ public sealed class YaoiHelperModuleSettings : EverestModuleSettings {
 	}
 
 	[SettingName("MODOPTIONS_YAOIHELPER_LOGSUBMENU")]
-	public SubMenu0 LogSubMenu { get; set; } = new();
+	public LogSubMenu LogDisplay { get; set; } = new();
 }

@@ -41,7 +41,7 @@ public static class YaoiLogger {
         level.Add(new LogDisplay());
     }
     internal static void On_Logger_Log(Action<LogLevel, string, string> orig, LogLevel level, string tag, string str) {
-        string prefix = YaoiHelperModule.Settings.LogSubMenu.LogPrefix;
+        string prefix = YaoiHelperModule.Settings.LogDisplay.LogPrefix;
         if(tag.StartsWith(prefix)) 
             LogDisplay.AddLog($"[{tag.Substring(prefix.Length)}] [{level.ToString()}] {str}");
         orig(level, tag, str);
@@ -93,7 +93,7 @@ public sealed class LogDisplay : Entity {
 
     private static void pushLine(string line) {
         if(Content.Count == maxLines) Content.RemoveAt(0);
-        Content.Add(new LogLine(line, YaoiHelperModule.Settings.LogSubMenu.LogLifespan*60));
+        Content.Add(new LogLine(line, YaoiHelperModule.Settings.LogDisplay.LogLifespan*60));
     }
 
     private void writeLine(string line, Vector2 position) {
@@ -102,7 +102,7 @@ public sealed class LogDisplay : Entity {
 
     public override void Update() {
         base.Update();
-        if(YaoiHelperModule.Settings.LogSubMenu.LogLifespan > 0) {
+        if(YaoiHelperModule.Settings.LogDisplay.LogLifespan > 0) {
             foreach (LogLine line in Content) {
                 line.TimeLeft--;
             }
@@ -113,7 +113,7 @@ public sealed class LogDisplay : Entity {
 
     public override void Render() {
         base.Render();
-        if (!YaoiHelperModule.Settings.LogSubMenu.DisplayLog || Scene is not Level level || level.FrozenOrPaused || Content.Count() == 0) return;
+        if (!YaoiHelperModule.Settings.LogDisplay.Enabled || Scene is not Level level || level.FrozenOrPaused || Content.Count() == 0) return;
         width = ActiveFont.Measure(Content.Aggregate("", (longest, log) => log.Line.Length > longest.Length ? log.Line : longest)).X * fontSize + padding.X * 2;
         height = Content.Count() * 25 + padding.Y * 2;
         Position.X = Engine.Width - width - padding.X;

@@ -1,6 +1,6 @@
 - DLL: bin/YaoiHelper.dll
   Name: YaoiHelper
-  Version: 0.3.13
+  Version: 0.3.15
   Dependencies:
     - Name: Everest
       Version: 1.6305.0

@@ -13,7 +13,7 @@ public sealed class MouseMovementTrigger : Trigger {
 	private readonly bool clickAndDrag;
 	private readonly bool allowDashing;
 	private readonly bool drawCursor;
-	
+
 	private Vector2 grabOffset = Vector2.Zero;
 	private bool grabbed = false;
 	private bool canGrab(Player player) => CollideCheck(player) && (!clickAndDrag || ((Hitbox)player.Collider).Collide(mousePos));
@@ -32,12 +32,12 @@ public sealed class MouseMovementTrigger : Trigger {
 		if (level.Tracker.GetEntities<Player>().OfType<Player>().FirstOrDefault() is not Player player) return;
 
 		mousePos = SceneAs<Level>().ScreenToWorld(new Vector2(MInput.Mouse.X - Engine.Viewport.X, MInput.Mouse.Y - Engine.Viewport.Y));
-		
+
 
 		if (!grabbed && canGrab(player)) {
 			grabbed = true;
 			grabOffset = mousePos - player.Position;
-		} 
+		}
 
 		grabbed = grabbed && MInput.Mouse.CheckLeftButton;
 		player.onGround = grabbed;

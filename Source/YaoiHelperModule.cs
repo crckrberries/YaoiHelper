@@ -15,13 +15,13 @@ public sealed class YaoiHelperModule : EverestModule {
 	}
 
 	public override Type SettingsType => typeof(YaoiHelperModuleSettings);
-	public static YaoiHelperModuleSettings Settings => (YaoiHelperModuleSettings) Instance._Settings;
+	public static YaoiHelperModuleSettings Settings => (YaoiHelperModuleSettings)Instance._Settings;
 
 	public override Type SessionType => typeof(YaoiHelperModuleSession);
-	public static YaoiHelperModuleSession Session => (YaoiHelperModuleSession) Instance._Session;
+	public static YaoiHelperModuleSession Session => (YaoiHelperModuleSession)Instance._Session;
 
 	public override Type SaveDataType => typeof(YaoiHelperModuleSaveData);
-	public static YaoiHelperModuleSaveData SaveData => (YaoiHelperModuleSaveData) Instance._SaveData;
+	public static YaoiHelperModuleSaveData SaveData => (YaoiHelperModuleSaveData)Instance._SaveData;
 
 	public static readonly EverestModuleMetadata SRTModuleMetadata = new() {
 		Name = "SpeedrunTool",

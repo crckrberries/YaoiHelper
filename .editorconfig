@@ -1,8 +1,15 @@
 root = true
 
 [*.cs]
+indent_style = tab
+
 # braces on same line
 csharp_new_line_before_open_brace = false
+
+# `else`, `catch` etc on same line as closing brace
+csharp_new_line_before_catch = false
+csharp_new_line_before_else = false
+csharp_new_line_before_while = false
 
 # shut up collection expression
 dotnet_style_prefer_collection_expression = never:none
@@ -31,4 +38,5 @@ dotnet_naming_symbols.private_members.applicable_accessibilities = private, priv
 dotnet_naming_symbols.private_members.required_modifiers =
 
 dotnet_naming_style.camel_case.capitalization = camel_case
+
 

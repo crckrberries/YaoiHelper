@@ -26,17 +26,17 @@ internal sealed class BetterTimerTrigger : Trigger {
 	private int frameTimer = 0;
 
 	public BetterTimerTrigger(EntityData data, Vector2 offset) : base(data, offset) {
-		time             = data.Float("time");
-		frames           = data.Int("frames");
-		flag             = data.Attr("flagToSet");
-		unset            = data.Bool("unsetFlag");
-		ctrl             = data.Attr("controlFlag");
-		ctrlInvert       = data.Bool("controlFlagInverted");
-		mode             = data.Int("mode");
-		resetOnLeave     = data.Bool("resetTimerOnLeave");
+		time = data.Float("time");
+		frames = data.Int("frames");
+		flag = data.Attr("flagToSet");
+		unset = data.Bool("unsetFlag");
+		ctrl = data.Attr("controlFlag");
+		ctrlInvert = data.Bool("controlFlagInverted");
+		mode = data.Int("mode");
+		resetOnLeave = data.Bool("resetTimerOnLeave");
 		resetOnCtrlUnset = data.Bool("resetTimerOnControlFlagUnset");
-		unsetOnRoomLoad  = data.Bool("unsetOnRoomLoad");
-		compareLOnly     = data.Bool("compareLOnly");
+		unsetOnRoomLoad = data.Bool("unsetOnRoomLoad");
+		compareLOnly = data.Bool("compareLOnly");
 	}
 
 	public override void Added(Scene scene) {
@@ -60,21 +60,21 @@ internal sealed class BetterTimerTrigger : Trigger {
 
 		if (string.IsNullOrEmpty(ctrl) || session.GetFlag(ctrl) != ctrlInvert) {
 			switch (mode) {
-			case 0: // "DeltaTime"
-				timer += Engine.DeltaTime;
-				if ((!compareLOnly && timer >= time) || (compareLOnly && timer > time))
-					session.SetFlag(flag, !unset);
-				break;
-			case 1: // "RawDeltaTime"
-				timer += Engine.RawDeltaTime;
-				if ((!compareLOnly && timer >= time) || (compareLOnly && timer > time))
-					session.SetFlag(flag, !unset);
-				break;
-			case 2: // "Frame count"
-				frameTimer++;
-				if ((!compareLOnly && frameTimer >= frames) || (compareLOnly && frameTimer > frames))
-					session.SetFlag(flag, !unset);
-				break;
+				case 0: // "DeltaTime"
+					timer += Engine.DeltaTime;
+					if ((!compareLOnly && timer >= time) || (compareLOnly && timer > time))
+						session.SetFlag(flag, !unset);
+					break;
+				case 1: // "RawDeltaTime"
+					timer += Engine.RawDeltaTime;
+					if ((!compareLOnly && timer >= time) || (compareLOnly && timer > time))
+						session.SetFlag(flag, !unset);
+					break;
+				case 2: // "Frame count"
+					frameTimer++;
+					if ((!compareLOnly && frameTimer >= frames) || (compareLOnly && frameTimer > frames))
+						session.SetFlag(flag, !unset);
+					break;
 			}
 		} else if (resetOnCtrlUnset && !string.IsNullOrEmpty(ctrl)) {
 			timer = 0f;

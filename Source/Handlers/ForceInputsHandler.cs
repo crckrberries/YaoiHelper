@@ -136,7 +136,8 @@ public static class ForceInputsHandler {
 		try {
 			hooksEnabled = true;
 			fn();
-		} finally {
+		}
+		finally {
 			hooksEnabled = false;
 			resetGlobal();
 

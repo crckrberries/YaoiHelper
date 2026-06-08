@@ -14,11 +14,11 @@ namespace Celeste.Mod.YaoiHelper.Handlers;
 
 [Submodule]
 public static class HDShaderHandler {
-	private static readonly List<VirtualRenderTarget> flipflop_targets = new(2) { 
+	private static readonly List<VirtualRenderTarget> flipflop_targets = new(2) {
 		VirtualContent.CreateRenderTarget("hd-shader-flip", 1920, 1080),
 		VirtualContent.CreateRenderTarget("hd-shader-flop", 1920, 1080),
 	};
-	
+
 	internal static void ApplyHooks() {
 		IL.Celeste.Level.Render += IL_LevelRender_ApplyShader;
 	}
@@ -31,7 +31,7 @@ public static class HDShaderHandler {
 		ILCursor cursor = new ILCursor(il);
 
 		cursor.GotoNext(MoveType.Before,
-			cursor => cursor.MatchLdnull(), 
+			cursor => cursor.MatchLdnull(),
 			cursor => cursor.MatchCallvirt<GraphicsDevice>("SetRenderTarget")
 		);
 		cursor.Index -= 2;
@@ -93,7 +93,7 @@ public static class HDShaderHandler {
 		// TODO this is really really jank
 		List<Shader> shaders = level.Tracker.GetEntities<HDShaderTrigger>().Cast<HDShaderTrigger>().Where(x => x.Activated(level) && x.SourceData.Level.Name == controller.SourceData.Level.Name).SelectMany(x => x.Shaders).ToList();
 		bool applyShaders = shaders.Count > 0 && level.Tracker.CountEntities<HDShaderController>() > 0;
-		
+
 		Vector2 vector = new Vector2(320f, 180f);
 		Vector2 vector2 = vector / level.ZoomTarget;
 		Vector2 vector3 = level.ZoomTarget != 1f ? (level.ZoomFocusPoint - vector2 / 2f) / (vector - vector2) * vector : Vector2.Zero;
@@ -113,7 +113,7 @@ public static class HDShaderHandler {
 		Draw.SpriteBatch.End();
 
 		if (!applyShaders) return;
-		
+
 		List<IShaderMask> shaderMasks = level.Tracker.GetEntities<ShaderMask>().Cast<IShaderMask>().ToList();
 		List<string> maskGroups = shaderMasks.SelectMany(x => x.MaskGroups).ToList();
 
@@ -232,7 +232,7 @@ public static class SpecialBuffers {
 		ILCursor cursor = new ILCursor(il);
 
 		cursor.GotoNext(MoveType.Before,
-			cursor => cursor.MatchLdnull(), 
+			cursor => cursor.MatchLdnull(),
 			cursor => cursor.MatchCallvirt<GraphicsDevice>("SetRenderTarget")
 		);
 		cursor.Index -= 2;
@@ -284,7 +284,7 @@ public static class SpecialBuffers {
 
 	public static void Create(string name, int width, int height) {
 		targets.Add(name, VirtualContent.CreateRenderTarget($"hd-shader-special-target-{name}", width, height));
-	}	
+	}
 
 	public static void Init() {
 		Create("empty", 320, 180);

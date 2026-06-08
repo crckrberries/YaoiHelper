@@ -70,25 +70,25 @@ internal sealed class ForceInputsTrigger : Trigger {
 			seen.Add(input[i]);
 
 			switch (input[i]) {
-			case 'l':
-			case 'r':
-				if (seenH && input[0] != '!')
-					throw new ArgumentException("can't force both L & R!");
-				seenH = true;
-				break;
-			case 'u':
-			case 'd':
-				if (seenV && input[0] != '!')
-					throw new ArgumentException("can't force both U & D!");
-				seenV = true;
-				break;
-			case 'j':
-			case 'x':
-			case 'z':
-			case 'g':
-				break;
-			default:
-				throw new ArgumentException($"unknown input '{input[i]}'!");
+				case 'l':
+				case 'r':
+					if (seenH && input[0] != '!')
+						throw new ArgumentException("can't force both L & R!");
+					seenH = true;
+					break;
+				case 'u':
+				case 'd':
+					if (seenV && input[0] != '!')
+						throw new ArgumentException("can't force both U & D!");
+					seenV = true;
+					break;
+				case 'j':
+				case 'x':
+				case 'z':
+				case 'g':
+					break;
+				default:
+					throw new ArgumentException($"unknown input '{input[i]}'!");
 			}
 		}
 	}

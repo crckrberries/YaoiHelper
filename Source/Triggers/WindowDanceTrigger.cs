@@ -36,7 +36,7 @@ public sealed partial class WindowDanceTrigger : Trigger {
 
 	public override void OnLeave(Player player) {
 		base.OnLeave(player);
-		
+
 		Engine.SetFullscreen();
 		SceneAs<Level>().Camera.Origin = SceneAs<Level>().CameraOffset;
 		SceneAs<Level>().Camera.Zoom = 1f;

@@ -9,6 +9,7 @@ shaderMask.placements = {
 		height = 16,
 		mask_groups = "",
 		mask_image = "",
+		low_res = false
 	}
 }
 

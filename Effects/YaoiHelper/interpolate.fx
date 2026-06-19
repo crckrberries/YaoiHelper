@@ -4,9 +4,9 @@
 
 #define SAMPLE_TEXTURE(Name, texCoord) tex2D(Name##Sampler, texCoord)
 
-uniform float Time; // level.TimeActive
-uniform float2 CamPos; // level.Camera.Position
-uniform float2 Dimensions; // new Vector2(320, 180)
+uniform float Time; 
+uniform float2 CamPos; 
+uniform float2 Dimensions; 
 
 uniform float4x4 ViewMatrix;
 uniform float4x4 TransformMatrix;

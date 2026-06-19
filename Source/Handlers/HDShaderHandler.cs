@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.Registry;
 using Celeste.Mod.YaoiHelper.Entities;
 using Celeste.Mod.YaoiHelper.Interfaces;
 using Celeste.Mod.YaoiHelper.Triggers;
@@ -19,6 +20,12 @@ public static class HDShaderHandler {
 		VirtualContent.CreateRenderTarget("hd-shader-flip", 1920, 1080),
 		VirtualContent.CreateRenderTarget("hd-shader-flop", 1920, 1080),
 	};
+
+	private static readonly Dictionary<string, Effect> utilShaders = new Dictionary<string, Effect>() {
+		["invert"] = new Effect(Engine.Graphics.GraphicsDevice, Everest.Content.Get("Effects/YaoiHelper/util/invert.cso").Data),
+	};
+
+	private static readonly VirtualRenderTarget tempLowRes = VirtualContent.CreateRenderTarget("hd-shader-temp-lowres", 320, 180);
 
 	private static readonly Dictionary<int, VirtualRenderTarget> rescale_targets = new Dictionary<int, VirtualRenderTarget>(16);
 	
@@ -93,7 +100,12 @@ public static class HDShaderHandler {
 					_ => throw new ArgumentException($"invalid prefix '{texIdentifier[0]}' - valid ones are '%' for mask groups, '$' for GameplayBuffers, '#' for special buffers and '/' for texture files"),
 				};
 
-				Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, null, Matrix.CreateScale(1920 / texture.Width, 1080 / texture.Height, 1));
+				Effect? texShader = modifier switch {
+					'!' => utilShaders["invert"],
+					_ => null,
+				};
+
+				Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, texShader, Matrix.CreateScale(1920 / texture.Width, 1080 / texture.Height, 1));
 				Draw.SpriteBatch.Draw(texture, Vector2.Zero, texture.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
 				Draw.SpriteBatch.End();
 
@@ -152,25 +164,54 @@ public static class HDShaderHandler {
 		shaders.Sort((a, b) => a.Priority.CompareTo(b.Priority));
 
 		List<IShaderMask> shaderMasks = level.Tracker.Entities.Values.SelectMany(x => x).Where(x => typeof(IShaderMask).IsAssignableFrom(x.GetType())).Cast<IShaderMask>().ToList();
-		List<string> maskGroups = shaderMasks.SelectMany(x => x.MaskGroups).ToList();
+		List<string> maskGroups = controller.MaskGroups.Keys.ToList();
 
 		Texture[] colorgradeTextures = new Texture[2] {
 			Engine.Graphics.GraphicsDevice.Textures[1],
 			Engine.Graphics.GraphicsDevice.Textures[2]
 		};
 
+		VirtualMap<MTexture> orig = level.SolidTiles.Tiles.Tiles.Clone();
+
 		foreach (string group in maskGroups) {
+			Engine.Graphics.GraphicsDevice.SetRenderTarget(tempLowRes);
+			Engine.Graphics.GraphicsDevice.Clear(Color.Transparent);
+
+			Draw.SpriteBatch.Begin(spriteSortMode, blendState, samplerState, depthStencilState, rasterizerState, null, level.Camera.Matrix);
+
+			foreach (IShaderMask sm in shaderMasks.Where(x => x.LowRes && x.MaskGroups.Contains(group))) {
+				sm.RenderMask();
+			}
+
+			if (TilesetShaderMaskHandler.TilesetMaskGroups.ContainsValue(group)) {
+				List<string> maskTilesetPaths = TilesetShaderMaskHandler.TilesetMaskGroups.Where(x => x.Value == group).Select(x => x.Key).ToList();
+				for (int i = 0; i < level.SolidTiles.Tiles.Tiles.Columns; i++) {
+					for (int j = 0; j < level.SolidTiles.Tiles.Tiles.Rows; j++) {
+						level.SolidTiles.Tiles.Tiles[i, j] = maskTilesetPaths.Contains(orig[i, j]?.Parent.AtlasPath!) ? orig[i, j] : null;
+					}
+				}
+
+				level.SolidTiles.Tiles.Render();
+
+			}
+
+			Draw.SpriteBatch.End();
+
 			Engine.Graphics.GraphicsDevice.SetRenderTarget(controller.GetMaskGroupTarget(group));
 			Engine.Graphics.GraphicsDevice.Clear(Color.Transparent);
 
-		Draw.SpriteBatch.Begin(spriteSortMode, blendState, samplerState, depthStencilState, rasterizerState, applyShaders ? null : effect, applyShaders ? Matrix.CreateScale(6f) : matrix);
+			Draw.SpriteBatch.Begin(spriteSortMode, blendState, samplerState, depthStencilState, rasterizerState, null, Matrix.CreateScale(6f));
 
-			foreach (IShaderMask sm in shaderMasks.Where(x => x.MaskGroups.Contains(group))) {
+			Draw.SpriteBatch.Draw(tempLowRes, initialDrawPosition, tempLowRes.Bounds, Color.White, initialRotation, initialOrigin, initialScale, SpriteEffects.None, initialLayerDepth);
+
+			foreach (IShaderMask sm in shaderMasks.Where(x => !x.LowRes && x.MaskGroups.Contains(group))) {
 				sm.RenderMask();
 			}
 
 			Draw.SpriteBatch.End();
 		}
+
+		level.SolidTiles.Tiles.Tiles = orig;
 
 		RenderTarget2D? source;
 		RenderTarget2D? target;

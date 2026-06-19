@@ -33,16 +33,16 @@ float fbm(float3 x) {
 
 #define SAMPLE_TEXTURE(Name, texCoord) tex2D(Name##Sampler, texCoord)
 
-uniform float Time; // level.TimeActive
-uniform float2 CamPos; // level.Camera.Position
-uniform float2 Dimensions; // new Vector2(320, 180)
+uniform float Time; 
+uniform float2 CamPos; 
+uniform float2 Dimensions; 
 
 uniform float4x4 ViewMatrix;
 uniform float4x4 TransformMatrix;
 
 DECLARE_TEXTURE(text, 0);
-DECLARE_TEXTURE(exclude_mask, 1);
-DECLARE_TEXTURE(reverse_mask, 2);
+DECLARE_TEXTURE(exclude_mask, 3);
+DECLARE_TEXTURE(reverse_mask, 4);
 
 float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 {

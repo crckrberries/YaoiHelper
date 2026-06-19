@@ -91,5 +91,5 @@ entities.YaoiHelper/BuildRegion.placements.name.main=Build Allowed Region
 entities.YaoiHelper/BuildRegion.placements.description.main=When placed, restricts building (using Build Controller or the Build Anywhere mod setting) to the area within it.
 entities.YaoiHelper/BuildRegion.attributes.description.prevent_building_when_inside=Whether or not the player should be barred from building anywhere when inside this entity.
 
-entities.YaoiHelper/EntityIDShaderMask.name.main=Entity ID Shader Mask
-entities.YaoiHelper/EntityIDShaderMask.description.main=Renders entities specified by their ID to a mask group.
+entities.YaoiHelper/EntityIDShaderMask.placements.name.main=Entity ID Shader Mask
+entities.YaoiHelper/EntityIDShaderMask.placements.description.main=Renders entities specified by their ID to a mask group.

@@ -6,6 +6,7 @@ return {
 		data = {
 			mask_groups = "",
 			entity_ids = "",
+			low_res = true
 		},
 
 	},

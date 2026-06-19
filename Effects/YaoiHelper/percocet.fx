@@ -46,7 +46,7 @@ float fbm(float3 x) {
 }
 
 DECLARE_TEXTURE(text, 0);
-DECLARE_TEXTURE(mask, 1);
+DECLARE_TEXTURE(mask, 3);
 
 float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 {

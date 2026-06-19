@@ -4,15 +4,15 @@
 
 #define SAMPLE_TEXTURE(Name, texCoord) tex2D(Name##Sampler, texCoord)
 
-uniform float Time; // level.TimeActive
-uniform float2 CamPos; // level.Camera.Position
-uniform float2 Dimensions; // new Vector2(320, 180)
+uniform float Time; 
+uniform float2 CamPos; 
+uniform float2 Dimensions; 
 
 uniform float4x4 ViewMatrix;
 uniform float4x4 TransformMatrix;
 
 DECLARE_TEXTURE(text, 0);
-DECLARE_TEXTURE(mask, 1);
+DECLARE_TEXTURE(mask, 3);
 
 float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 {
@@ -20,7 +20,7 @@ float4 SpritePixelShader(float2 uv : TEXCOORD0) : COLOR0
 	float4 color = SAMPLE_TEXTURE(text, uv);
 	float4 icolor = float4(1. - color.rgb, color.a);
 
-    return lerp(color, icolor, mask.r);
+    return lerp(color, icolor, any(mask.rgb));
 }
 
 void SpriteVertexShader(inout float4 color    : COLOR0,

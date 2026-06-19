@@ -22,7 +22,7 @@ public static class HDShaderHandler {
 	};
 
 	private static readonly Dictionary<string, Effect> utilShaders = new Dictionary<string, Effect>() {
-		["invert"] = new Effect(Engine.Graphics.GraphicsDevice, Everest.Content.Get("Effects/YaoiHelper/util/invert.cso").Data),
+		["texmodifiers"] = new Effect(Engine.Graphics.GraphicsDevice, Everest.Content.Get("Effects/YaoiHelper/util/texmodifiers.cso").Data),
 	};
 
 	private static readonly VirtualRenderTarget tempLowRes = VirtualContent.CreateRenderTarget("hd-shader-temp-lowres", 320, 180);
@@ -84,8 +84,9 @@ public static class HDShaderHandler {
 			foreach (string value in values.Split('+').Select(x => x.Trim())) {
 				// TODO add polarization and negation
 				char? modifier = value[0] switch {
-					'!' => '!',
 					'-' => '-',
+					'*' => '*',
+					'!' => '!',
 					_ => null
 				};
 
@@ -100,9 +101,13 @@ public static class HDShaderHandler {
 					_ => throw new ArgumentException($"invalid prefix '{texIdentifier[0]}' - valid ones are '%' for mask groups, '$' for GameplayBuffers, '#' for special buffers and '/' for texture files"),
 				};
 
-				Effect? texShader = modifier switch {
-					'!' => utilShaders["invert"],
-					_ => null,
+				Effect? texShader = modifier is null ? null : utilShaders["texmodifiers"];
+
+				texShader?.CurrentTechnique = modifier switch {
+					'-' => texShader.Techniques[0],
+					'*' => texShader.Techniques[1],
+					'!' => texShader.Techniques[2],
+					_ => texShader.CurrentTechnique,
 				};
 
 				Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, texShader, Matrix.CreateScale(1920 / texture.Width, 1080 / texture.Height, 1));

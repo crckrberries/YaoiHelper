@@ -46,9 +46,13 @@ public sealed class MouseMovementTrigger : Trigger {
 
 		if (grabbed && !(player.StateMachine.State != 0 && allowDashing)) {
 			player.Position = mousePos - grabOffset;
-		} else if (fling) {
+		} 
+		
+		// fix by: wellington. follow for more fixes/improvements that will make your silly ahh lose it 
+		if (fling) { 
 			player.Speed += (player.Position - last) * 10;
 		}
+
 	}
 
 	public override void Render() {

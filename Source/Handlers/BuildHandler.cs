@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Celeste.Mod.YaoiHelper.Entities;
+using Celeste.Mod.YaoiHelper.Interop;
 using Celeste.Mod.YaoiHelper.Triggers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -16,15 +17,18 @@ public enum BuildMode {
 	Entities
 }
 
-[Submodule]
+[Submodule(HasSRTSupport = true)]
 public static class BuildHandler {
+	private static float modeSwitchDoubleTapTimer = 0f;
+	private static object? buildSRTHandle;
+
 	public static BuildMode Mode { get; private set; } = BuildMode.Tiles;
 	public static Vector2 MousePos { get; private set; }
-	private static float modeSwitchDoubleTapTimer = 0f;
 	public static bool AllowEntityMode { get; set; }
 	public static bool FlagSet { get; set; } = true;
 
 	public static bool BuildRoom(string level) => tileModifications.ContainsKey(level) || Mode == BuildMode.Entities;
+
 
 	// tile stuff
 	// ---------------------------------------------------------------------------
@@ -73,6 +77,19 @@ public static class BuildHandler {
 		On.Celeste.Level.Update -= On_LevelUpdate_Build;
 		Everest.Events.LevelLoader.OnLoadingThread -= OnLoadingThread_AddCursorDisplayAndClearBuilds;
 		Everest.Events.Level.OnLoadLevel -= OnLoadLevel_ClearEntitySelection;
+	}
+	
+	internal static void RegisterSRTSupport() {
+		if (buildSRTHandle is not null)
+			throw new InvalidOperationException("SRT handle for countdowns field is already registered; did this somehow get called multiple times?");
+		buildSRTHandle = SpeedrunToolSaveLoadImports.RegisterStaticTypes(typeof(GlobalTimerHandler), [nameof(tileModifications)]);
+	}
+
+	internal static void UnregisterSRTSupport() {
+		if (buildSRTHandle is not null) {
+			SpeedrunToolSaveLoadImports.Unregister(buildSRTHandle);
+			buildSRTHandle = null;
+		}
 	}
 
 	public static void ResetTileModifications() {

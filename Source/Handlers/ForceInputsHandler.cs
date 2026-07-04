@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace Celeste.Mod.YaoiHelper.Handlers;
 
-public enum ForcedInputState {
+public enum ForcedInputState : byte {
 	ForcePress,
 	ForceRelease,
 	DontAffect,

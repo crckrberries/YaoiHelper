@@ -12,7 +12,7 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.YaoiHelper.Handlers;
 
-public enum BuildMode {
+public enum BuildMode : byte {
 	Tiles,
 	Entities
 }

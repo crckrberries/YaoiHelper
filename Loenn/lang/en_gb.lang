@@ -2,7 +2,7 @@ triggers.YaoiHelper/MinimizeGame.placements.name.main=Minimize Game
 triggers.YaoiHelper/MinimizeGame.placements.description.main=Minimizes the game.
 
 triggers.YaoiHelper/HDShader.placements.name.main=HD Shader
-triggers.YaoiHelper/HDShader.placements.description.main=Applies a high-resolution (1920x1080) shader to the game.\nRequires a HD Shader Controller to function.
+triggers.YaoiHelper/HDShader.placements.description.main=Applies a high-resolution (1920x1080) shader to the game.
 triggers.YaoiHelper/HDShader.attributes.description.effects=A comma-seperated list of shaders this trigger should load, relative to Effects and sans file extension.\nIf your shader is in `Effects/mymodname/myshader.cso`, put `mymodname/myshader` here.
 triggers.YaoiHelper/HDShader.attributes.description.textures=A list of textures to pass to your shader. Format is <textureslot>:<prefix><identifier>\nThe available prefixes are `%` for mask groups, `$` for GameplayBuffers, `#` for special buffers and `%` for files.\nThe identifier for mask groups is the name of the mask group as defined in the Shader Mask.\nThe identifier for files is the path to the file relative to Graphics/Atlases/Gameplay.
 triggers.YaoiHelper/HDShader.attributes.description.flag=If this is populated, the shader will only display when the flag is set.
@@ -73,11 +73,6 @@ triggers.YaoiHelper/SpeedFadeTrigger.placements.description.main=Fades the trigg
 triggers.YaoiHelper/SpeedFadeTrigger.attributes.description.lower_bound=Speed values below this get clamped to 0%.
 triggers.YaoiHelper/SpeedFadeTrigger.attributes.description.upper_bound=Speed values above this get clamped to 100%.
 
-
-entities.YaoiHelper/HDShaderController.placements.name.main=HD Shader Controller
-entities.YaoiHelper/HDShaderController.placements.description.main=Adjusts the behavior of HD Shader triggers.\nRequired for said triggers to function.
-entities.YaoiHelper/HDShaderController.attributes.description.render_player_over=If enabled, renders the player over the active shaders (and also some other things, such as darkness alpha)
-entities.YaoiHelper/HDShaderController.attributes.description.render_level_over=If enabled, renders the level over the active shaders, although without stylegrounds.
 
 entities.YaoiHelper/BuildController.placements.name.main=Build Controller
 entities.YaoiHelper/BuildController.placements.description.main=Allows the player to build and mine tiles.

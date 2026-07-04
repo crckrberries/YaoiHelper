@@ -208,7 +208,7 @@ public static class HDShaderHandler {
 	private static void renderWithShaders(SpriteBatch _spriteBatch, SpriteSortMode spriteSortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect, Matrix matrix, Level level, RenderTarget2D initialDrawSource, Vector2 initialDrawPosition, Rectangle initialSourceRect, Color initialColor, float initialRotation, Vector2 initialOrigin, float initialScale, SpriteEffects initialSpriteEffects, float initialLayerDepth) {
 		RenderTarget2D origTarget = (RenderTarget2D)Engine.Graphics.GraphicsDevice.GetRenderTargets().ElementAtOrDefault(0).RenderTarget;
 		// TODO this is really really jank
-		List<Shader> shaders = level.Tracker.GetEntities<HDShaderTrigger>().Cast<HDShaderTrigger>().Where(x => x.Activated(level) && x.SourceData.Level.Name == ((Level)Engine.Scene).Session.Level).SelectMany(x => x.Shaders).ToList();
+		List<Shader> shaders = level.Tracker.GetEntities<HDShaderTrigger>().Cast<HDShaderTrigger>().Where(x => x.Activated(level) && x.SourceData.Level.Name == level.Session.Level).SelectMany(x => x.Shaders).ToList();
 		bool applyShaders = shaders.Count > 0;
 		
 		Engine.Graphics.GraphicsDevice.SetRenderTarget(applyShaders ? (RenderTarget2D)flipflop_targets[0] : origTarget);

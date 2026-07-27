@@ -106,3 +106,8 @@ entities.YaoiHelper/VerticalCrumbleBlock.placements.description.main=stretch
 
 entities.YaoiHelper/EntityInvisibilityField.placements.name.main=Entity Invisibility Field
 entities.YaoiHelper/EntityInvisibilityField.placements.description.main=Makes entities within itself invisible.
+
+triggers.YaoiHelper/StaminaFadeTrigger.placements.name.main=Stamina Fade Trigger
+triggers.YaoiHelper/StaminaFadeTrigger.placements.description.main=Fades the trigger under the node based on the stamina of the player.
+triggers.YaoiHelper/StaminaFadeTrigger.attributes.description.lower_bound=Stamina values below this get clamped to 0%.
+triggers.YaoiHelper/StaminaFadeTrigger.attributes.description.upper_bound=Stamina values above this get clamped to 100%.

@@ -3,11 +3,11 @@ return {
 	placements = {
 		name = "main",
 		data = {
-			flagData = "",
-			useDeltaTime = false,
-			offsetFreezeFrames = false,
+			flag_data = "",
+			use_delta_time = false,
+			offset_freeze_frames = false,
 			loop = false,
-			useTotalTime = true
+			use_total_time = true
 		}
 	}
 }

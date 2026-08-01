@@ -27,16 +27,16 @@ public class FlagSequence : Trigger {
     private (int, (string, bool)[])[] parsedFlagData = [];
     
     public FlagSequence(EntityData data, Vector2 offset) : base(data, offset) {
-        flagData           = data.Attr("flagData");
-        useDeltaTime       = data.Bool("useDeltaTime");
-        offsetFreezeFrames = data.Bool("offsetFreezeFrames");
+        flagData           = data.Attr("flag_data");
+        useDeltaTime       = data.Bool("use_delta_time");
+        offsetFreezeFrames = data.Bool("offset_freeze_frames");
         loop               = data.Bool("loop");
-        useTotalTime       = data.Bool("useTotalTime");
+        useTotalTime       = data.Bool("use_total_time");
     }
 
     internal static void ApplyHooks() {
         using (new DetourConfigContext(new DetourConfig(
-            $"{YaoiHelperModule.DefaultDetourID}_{nameof(DisableGlitchTrigger)}")).Use()) { 
+            $"{YaoiHelperModule.DefaultDetourID}_{nameof(FlagSequence)}")).Use()) { 
             On.Celeste.Celeste.Freeze += on_CelesteFreeze_AdvanceFlagSequenceTimer;
         }
     }

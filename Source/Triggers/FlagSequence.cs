@@ -24,14 +24,33 @@ public class FlagSequence : Trigger {
     private float deltaTimer;
     private int index;
 
-    private (int, (string, bool)[])[] parsedFlagData = [];
+    private struct FlagGroup {
+        public string Flag;
+        public bool Enabled;
+
+        public FlagGroup(string flag, bool enabled) {
+            Flag = flag;
+            Enabled = enabled;
+        }
+    }
+    private struct FlagData {
+        public int FrameCount;
+        public FlagGroup[] FlagGroup;
+
+        public FlagData(int frameCount, FlagGroup[] flagGroup) {
+            FrameCount = frameCount;
+            FlagGroup = flagGroup;
+        }
+    }
+
+    private FlagData[] parsedFlagData = [];
     
     public FlagSequence(EntityData data, Vector2 offset) : base(data, offset) {
-        flagData           = data.Attr("flag_data");
-        useDeltaTime       = data.Bool("use_delta_time");
+        flagData = data.Attr("flag_data");
+        useDeltaTime = data.Bool("use_delta_time");
         offsetFreezeFrames = data.Bool("offset_freeze_frames");
-        loop               = data.Bool("loop");
-        useTotalTime       = data.Bool("use_total_time");
+        loop = data.Bool("loop");
+        useTotalTime = data.Bool("use_total_time");
     }
 
     internal static void ApplyHooks() {
@@ -61,21 +80,21 @@ public class FlagSequence : Trigger {
 
         foreach (string data in splitFlagData) {
             string flagGroup = Regex.Split(data, ":")[1];
-            string[] splitFlagGroup = Regex.Split(flagGroup, ",");
-            (string, bool)[] parsedFlagGroup = [];
-            foreach (string data2 in splitFlagGroup) {
-                parsedFlagGroup = parsedFlagGroup.Append((
+            string[] splitFlagGroups = Regex.Split(flagGroup, ",");
+            FlagGroup[] parsedFlagGroups = [];
+            foreach (string data2 in splitFlagGroups) {
+                parsedFlagGroups = parsedFlagGroups.Append(new FlagGroup(
                         Regex.Replace(data2, "!", ""),
                         !Regex.IsMatch(data2, "!")
                     )).ToArray();
             }
-            parsedFlagData = parsedFlagData.Append((
+            parsedFlagData = parsedFlagData.Append(new FlagData(
                     int.Parse(Regex.Split(data, ":")[0]),
-                    parsedFlagGroup
+                    parsedFlagGroups
                 )).ToArray();
             
-            foreach ((string, bool) data2 in parsedFlagGroup) {
-                SceneAs<Level>()?.Session.SetFlag(data2.Item1, false); // todo: implement custom flag resetting
+            foreach (FlagGroup data2 in parsedFlagGroups) {
+                SceneAs<Level>()?.Session.SetFlag(data2.Flag, false); // todo: implement custom flag resetting
             }
         }
     }
@@ -89,10 +108,9 @@ public class FlagSequence : Trigger {
                 else {
                     deltaTimer += Engine.DeltaTime;
                 }
-
-                while (parsedFlagData[index].Item1 <= timer || parsedFlagData[index].Item1 / 60f <= deltaTimer) {
-                    foreach ((string, bool) flag in parsedFlagData[index].Item2) {
-                        SceneAs<Level>()?.Session.SetFlag(flag.Item1, flag.Item2);
+                while (parsedFlagData[index].FrameCount <= timer || parsedFlagData[index].FrameCount / 60f <= deltaTimer) {
+                    foreach (FlagGroup flag in parsedFlagData[index].FlagGroup) {
+                        SceneAs<Level>()?.Session.SetFlag(flag.Flag, flag.Enabled);
                     }
 
                     if (index == parsedFlagData.Length - 1) {
@@ -111,22 +129,19 @@ public class FlagSequence : Trigger {
                         timer = 0;
                         deltaTimer = 0.00f;
                     }
-
                     index++;
                 }
             }
         }
     }
-
+    
     public override void Update() {
         base.Update();
-        
         advanceTimer();
     }
-
+    
     public override void OnEnter(Player player) {
         base.OnEnter(player);
-
         active = true;
     }
 }

@@ -2,7 +2,6 @@ using System;
 using System.Runtime.InteropServices;
 using Celeste;
 using Celeste.Mod.Entities;
-using Crackerberries.YaoiHelper.Utils.Imports;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -29,7 +28,7 @@ public sealed partial class WindowDanceTrigger : Trigger {
 		if (!player.Visible) return;
 
 		SceneAs<Level>().Camera.Position = player.Position + player.Collider.Size / 2;
-		SDLImports.SDL_SetWindowPosition(Engine.Instance.Window.Handle, (int)((player.Position.X - player.level.LevelOffset.X) * (bounds.X / 320f) - windowSize.X / 2), (int)((player.Position.Y - player.level.LevelOffset.Y) * (bounds.Y / 180f) - windowSize.Y / 2));
+		SDL2.SDL.SDL_SetWindowPosition(Engine.Instance.Window.Handle, (int)((player.Position.X - player.level.LevelOffset.X) * (bounds.X / 320f) - windowSize.X / 2), (int)((player.Position.Y - player.level.LevelOffset.Y) * (bounds.Y / 180f) - windowSize.Y / 2));
 		SceneAs<Level>().Camera.CenterOrigin();
 	}
 

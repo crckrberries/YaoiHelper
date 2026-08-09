@@ -30,6 +30,12 @@ public sealed class YaoiHelperModule : EverestModule {
 	};
 	public static bool SRTLoaded { get; private set; }
 
+	public static readonly EverestModuleMetadata CelesteNetClientMetadata = new() {
+		Name = "CelesteNet.Client",
+		Version = new Version(1, 0, 0),
+	};
+	public static bool CNetLoaded { get; private set; }
+
 	private static Dictionary<Type, SubmoduleAttribute>? submodules;
 
 	public YaoiHelperModule() {
@@ -43,6 +49,7 @@ public sealed class YaoiHelperModule : EverestModule {
 
 	public override void Load() {
 		SRTLoaded = Everest.Loader.DependencyLoaded(SRTModuleMetadata);
+		CNetLoaded = Everest.Loader.DependencyLoaded(CelesteNetClientMetadata);
 
 		Dictionary<Type, BootstrapAttribute> bootstrap = getTypesWithAttr<BootstrapAttribute>(typeof(YaoiHelperModule).Assembly);
 		foreach ((Type t, BootstrapAttribute attr) in bootstrap.OrderBy(static kvp => kvp.Value.Order)) {

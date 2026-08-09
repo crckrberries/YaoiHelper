@@ -1,16 +1,17 @@
-// TODO: this needs a solid dusting
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Celeste;
 using Celeste.Mod;
-using Crackerberries.YaoiHelper.Interfaces;
+using Microsoft.Xna.Framework;
 using Crackerberries.YaoiHelper.Triggers;
 using Crackerberries.YaoiHelper.Types;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
+using System.Collections.Generic;
 
 namespace Crackerberries.YaoiHelper.Handlers;
 
@@ -24,29 +25,141 @@ public enum TextureType : byte {
 
 [Submodule]
 public static class HDShaderHandler {
-	private static readonly VirtualRenderTarget[] flipflop_targets = { 
+	private static RenderTarget2D?[]? fakeRTs = null;
+
+	private static RenderTarget2D? origTarget = null;
+	private static Matrix? origScreenMatrix = null;
+	private static Viewport? origViewport = null;
+
+	private static bool inLevelRender = false;
+
+	// `VirtualContent.CreateRenderTarget` relies on state that doesn't exist at hook application time, so this is initialized later
+	private static VirtualRenderTarget? captured_backbuffer = /* VirtualContent.CreateRenderTarget("yaoihelper-hd-shader-captured-backbuffer", 1920, 1080) */ null;
+
+	// same as captured_backbuffer
+	private static VirtualRenderTarget[]? flipflop_targets = /* { 
 		VirtualContent.CreateRenderTarget("yaoihelper-hd-shader-flip", 1920, 1080),
 		VirtualContent.CreateRenderTarget("yaoihelper-hd-shader-flop", 1920, 1080),
-	};
+	}; */ null;
 
-	private static readonly Dictionary<string, Effect> utilShaders = new Dictionary<string, Effect>() {
+	// Everest.Content.Get relies on state that doesn't exist at hook application time, so this is initialized later
+	private static Dictionary<string, Effect>? utilShaders = /* new Dictionary<string, Effect>() {
 		["texmodifiers"] = new Effect(Engine.Graphics.GraphicsDevice, Everest.Content.Get("Effects/YaoiHelper/util/texmodifiers.cso").Data),
-	};
+	}; */ null;
 
 	private static readonly Dictionary<TextureType, Dictionary<string, Texture2D>> texturePool = new Dictionary<TextureType, Dictionary<string, Texture2D>>();
 
 	private static readonly Dictionary<int, VirtualRenderTarget> concatTargets = new Dictionary<int, VirtualRenderTarget>(16);
 
-	private static readonly VirtualRenderTarget tempLowRes = VirtualContent.CreateRenderTarget("yaoihelper-hd-shader-temp-lowres", 320, 180);
+	// same as captured_backbuffer
+	private static VirtualRenderTarget? tempLowRes = /* VirtualContent.CreateRenderTarget("yaoihelper-hd-shader-temp-lowres", 320, 180) */ null;
+
+	private static Hook? hook_SetRenderTarget = null;
 
 	internal static void ApplyHooks() {
+		hook_SetRenderTarget = new Hook(typeof(GraphicsDevice).GetMethod(nameof(GraphicsDevice.SetRenderTargets), BindingFlags.Public | BindingFlags.Instance, [typeof(RenderTargetBinding[])]) ?? throw new KeyNotFoundException("mp ,etjpd mda,dm"), on_GraphicsDeviceSetRenderTargets_CaptureBackbuffer);
 		Everest.Events.Level.OnLoadLevel += on_LoadLevel_GenerateTexturePool;
 		IL.Celeste.Level.Render += il_LevelRender_ApplyShader;
+		On.Celeste.Level.Render += on_LevelRender_SetInLevelRender;
 	}
 
-	internal static void RemoveHooks() {
+    internal static void RemoveHooks() {
+		hook_SetRenderTarget?.Dispose();
+		hook_SetRenderTarget = null;
 		Everest.Events.Level.OnLoadLevel -= on_LoadLevel_GenerateTexturePool;
 		IL.Celeste.Level.Render -= il_LevelRender_ApplyShader;
+		On.Celeste.Level.Render -= on_LevelRender_SetInLevelRender;
+	}
+
+	// private static void initializeFakeRTs() {
+	// 	fakeRTs = [null];
+	// 	if (YaoiHelperModule.CNetLoaded && Everest.Loader.TryGetDependency(YaoiHelperModule.CelesteNetClientMetadata, out EverestModule cnetModule)) {
+	// 		MethodInfo? ofTypeOpen = typeof(GameComponentCollection).GetMethod("OfType");
+	// 		Type? renderHelperComponent = cnetModule.GetType().Assembly.GetType("CelesteNetRenderHelperComponent") ?? throw new TypeLoadException("meowkema");
+	// 		MethodInfo? ofType = ofTypeOpen?.MakeGenericMethod(renderHelperComponent);
+	// 	}
+	// }
+
+	private static void on_LevelRender_SetInLevelRender(On.Celeste.Level.orig_Render orig, Level self) {
+		inLevelRender = true;
+		try {
+			orig(self);
+		} finally {
+			inLevelRender = false;
+		}
+	}
+
+	private static void on_GraphicsDeviceSetRenderTargets_CaptureBackbuffer(Action<GraphicsDevice, RenderTargetBinding[]?> orig, GraphicsDevice self, RenderTargetBinding[]? rts) {
+		// if (inLevelRender && captured_backbuffer is not null && self.GetRenderTargets().ElementAtOrDefault(0)?.RenderTarget == (RenderTarget2D)captured_backbuffer) {
+		// 	return;
+		// }
+
+		// Console.WriteLine(rts?.ElementAtOrDefault(0).RenderTarget?.Name);
+		if (inLevelRender && (rts is null || rts?.ElementAtOrDefault(0) is null/* || rts?.Any(x => x.RenderTarget?.Name?.Contains("dbb") == true) == true */)) {
+			origTarget = (RenderTarget2D?)(rts?.ElementAtOrDefault(0).RenderTarget);
+
+			captured_backbuffer ??= VirtualContent.CreateRenderTarget("yaoihelper-hd-shader-captured-backbuffer", 1920, 1080);
+			orig(self, [(RenderTarget2D)captured_backbuffer]);
+		} else {
+			orig(self, rts);
+		}
+	}
+
+    private static void il_LevelRender_ApplyShader(ILContext il) {
+		ILCursor cursor = new ILCursor(il);
+
+		// VariableDefinition origTarget = new VariableDefinition(il.Method.Module.ImportReference(typeof(RenderTarget2D)));
+		// VariableDefinition origScreenMatrix = new VariableDefinition(il.Method.Module.ImportReference(typeof(Matrix)));
+		// il.Body.Variables.Add(origTarget);
+		// il.Body.Variables.Add(origScreenMatrix);
+
+		cursor.GotoNext(MoveType.After,
+			static i => i.MatchLdnull(), 
+			static i => i.MatchCallvirt<GraphicsDevice>("SetRenderTarget")
+		);
+
+		// cursor.EmitDelegate(setOrigTarget);
+		// cursor.EmitDelegate(swapToCaptureBuffer);
+		cursor.EmitDelegate(replaceEngineScreenMatrix);
+		// cursor.EmitStloc(origScreenMatrix);
+
+		// cursor.GotoNext(MoveType.Before,
+		// 	static i => i.MatchLdcR4(0.0f),
+		// 	static i => i.MatchCallvirt<SpriteBatch>("Draw")
+		// );
+		
+		cursor.GotoNext(MoveType.Before,
+			static i => i.MatchLdarg0(),
+			static i => i.MatchLdfld<Level>("SubHudRenderer")
+		);
+
+		cursor.MoveAfterLabels();
+		// cursor.EmitLdloc(origScreenMatrix);
+		cursor.EmitDelegate(restoreEngineScreenMatrix);
+		cursor.EmitLdarg0();
+		cursor.EmitDelegate(renderCaptured);
+    }
+
+	private static void swapToCaptureBuffer() {
+		captured_backbuffer ??= VirtualContent.CreateRenderTarget("yaoihelper-hd-shader-captured-backbuffer", 1920, 1080);
+		Engine.Graphics.GraphicsDevice.SetRenderTarget(captured_backbuffer);
+	}
+	
+	private static /* RenderTarget2D? */ void setOrigTarget() {
+		// return (RenderTarget2D)Engine.Graphics.GraphicsDevice.GetRenderTargets().ElementAtOrDefault(0).RenderTarget;
+		origTarget = (RenderTarget2D)Engine.Graphics.GraphicsDevice.GetRenderTargets().ElementAtOrDefault(0).RenderTarget;
+	}
+
+	private static void replaceEngineScreenMatrix() {
+		origScreenMatrix = Engine.ScreenMatrix;
+		origViewport = Engine.Viewport;
+		Engine.ScreenMatrix = Matrix.Identity;
+		Engine.Viewport = new Viewport(0, 0, 1920, 1080);
+	}
+
+	private static void restoreEngineScreenMatrix() {
+		Engine.ScreenMatrix = origScreenMatrix ?? throw new NullReferenceException("origScreenMatrix is null at this point, somehow");
+		Engine.Viewport = origViewport ?? throw new NullReferenceException("origViewport is null at this point, somehow");
 	}
 
 	private static void clearTexturePool() {
@@ -65,7 +178,15 @@ public static class HDShaderHandler {
 		clearTexturePool();
 
         IEnumerable<HDShaderTrigger> triggers = level.Tracker.GetEntities<HDShaderTrigger>().Cast<HDShaderTrigger>().Where(x => x.SourceData.Level.Name == level.Session.Level);
-        List<string> textures = triggers.Where(x => !string.IsNullOrEmpty(string.Concat(x.Shaders.SelectMany(x => x.Textures)))).SelectMany(x => x.Shaders).SelectMany(x => x.Textures).SelectMany(x => x.Split(':')[1].TrimStart().Split('+')).Select(x => x.Trim()).Select(x => "!*-".Contains(x[0]) ? x[1..] : x).Concat(triggers.SelectMany(x => x.Shaders).Where(x => !string.IsNullOrEmpty(x.Target)).Select(x => string.Concat('@', x.Target))).Distinct().ToList();
+        List<string> textures = triggers
+			.Where(x => !string.IsNullOrEmpty(string.Concat(x.Shaders.SelectMany(x => x.Textures))))
+			.SelectMany(x => x.Shaders).SelectMany(x => x.Textures)
+			.SelectMany(x => x.Split(':')[1].TrimStart().Split('+'))
+			.Select(x => x.Trim())
+			.Select(x => "!*-".Contains(x[0]) ? x[1..] : x)
+			.Concat(triggers.SelectMany(x => x.Shaders).Where(x => !string.IsNullOrEmpty(x.Target)).Select(x => string.Concat('@', x.Target)))
+			.Distinct().ToList();
+
 		foreach (string textureIdentifier in textures) {
             TextureType type = prefixToType(textureIdentifier[0]);
             texturePool[type].Add(textureIdentifier, VirtualContent.CreateRenderTarget($"hd-texture-pool-{textureIdentifier}", 1920, 1080));
@@ -82,34 +203,6 @@ public static class HDShaderHandler {
 				Draw.SpriteBatch.End();
 			}
 		}
-	}
-
-	private static void il_LevelRender_ApplyShader(ILContext il) {
-		ILCursor cursor = new ILCursor(il);
-
-		cursor.GotoNext(MoveType.Before,
-			i => i.MatchLdnull(), 
-			i => i.MatchCallvirt<GraphicsDevice>("SetRenderTarget")
-		);
-		cursor.Index -= 2;
-
-		cursor.GotoNext(MoveType.After, i => i.MatchLdloc2());
-		cursor.EmitLdarg0();
-		ILLabel dodgeSpriteBatchBegin = cursor.DefineLabel();
-		cursor.EmitBr(dodgeSpriteBatchBegin);
-
-		cursor.GotoNext(MoveType.After, i => i.MatchCall(typeof(Draw), "get_SpriteBatch"));
-		cursor.MarkLabel(dodgeSpriteBatchBegin);
-
-		cursor.GotoNext(MoveType.Before, i => i.MatchCallvirt<SpriteBatch>("Draw"));
-		ILLabel dodgeSpriteBatchDrawAndEnd = cursor.DefineLabel();
-		cursor.EmitBr(dodgeSpriteBatchDrawAndEnd);
-
-		cursor.GotoNext(MoveType.After, i => i.MatchCallvirt<SpriteBatch>("End"));
-		cursor.MarkLabel(dodgeSpriteBatchDrawAndEnd);
-
-		cursor.MoveAfterLabels();
-		cursor.EmitDelegate(renderWithShaders);
 	}
 
 	private static TextureType prefixToType(char pfx) {
@@ -133,7 +226,7 @@ public static class HDShaderHandler {
 			List<string> identifiers = values.Split('+').Select(x => x.Trim()).ToList();
 
 			// TODO jank
-			if (identifiers.Count == 1 && "%/$#".Contains(identifiers[0])) {
+			if (identifiers.Count == 1 && "%/$#@".Contains(identifiers[0])) {
 				Engine.Graphics.GraphicsDevice.Textures[slot] = texturePool[prefixToType(identifiers[0][0])][identifiers[0]];
 				continue;
 			}
@@ -154,9 +247,11 @@ public static class HDShaderHandler {
 				};
 
 				string texIdentifier = modifier is null ? value : value[1..];
-
 				Texture2D texture = texturePool[prefixToType(texIdentifier[0])][texIdentifier];
 
+				utilShaders ??= new Dictionary<string, Effect>() {
+					["texmodifiers"] = new Effect(Engine.Graphics.GraphicsDevice, Everest.Content.Get("Effects/YaoiHelper/util/texmodifiers.cso").Data),
+				};
 				Effect? texShader = modifier is null ? null : utilShaders["texmodifiers"];
 
 				texShader?.CurrentTechnique = modifier switch {
@@ -198,101 +293,35 @@ public static class HDShaderHandler {
 
 		return eff;
 	}
+	
+	public static void renderCaptured(Level level) {
+		inLevelRender = false;
 
-	private static void renderWithShaders(SpriteBatch _spriteBatch, SpriteSortMode spriteSortMode, BlendState blendState, SamplerState samplerState, DepthStencilState depthStencilState, RasterizerState rasterizerState, Effect effect, Matrix matrix, Level level, RenderTarget2D initialDrawSource, Vector2 initialDrawPosition, Rectangle initialSourceRect, Color initialColor, float initialRotation, Vector2 initialOrigin, float initialScale, SpriteEffects initialSpriteEffects, float initialLayerDepth) {
-		RenderTarget2D origTarget = (RenderTarget2D)Engine.Graphics.GraphicsDevice.GetRenderTargets().ElementAtOrDefault(0).RenderTarget;
-		// TODO this is really really jank
 		List<Shader> shaders = level.Tracker.GetEntities<HDShaderTrigger>().Cast<HDShaderTrigger>().Where(x => x.Activated(level) && x.SourceData.Level.Name == level.Session.Level).SelectMany(x => x.Shaders).ToList();
 		bool applyShaders = shaders.Count > 0;
-		
-		Engine.Graphics.GraphicsDevice.SetRenderTarget(applyShaders ? (RenderTarget2D)flipflop_targets[0] : origTarget);
-		Engine.Graphics.GraphicsDevice.Clear(applyShaders ? Color.Transparent : level.BackgroundColor);
 
-		// for proper letterboxing
-		if (!applyShaders && origTarget == null) {
+		if (!applyShaders) {
+			Engine.Graphics.GraphicsDevice.SetRenderTarget(origTarget);
+			Engine.Graphics.GraphicsDevice.Clear(Color.Transparent);
+
 			Engine.Graphics.GraphicsDevice.Viewport = Engine.Viewport;
+			Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, null, Engine.ScreenMatrix);
+			Draw.SpriteBatch.Draw(captured_backbuffer, Vector2.Zero, captured_backbuffer?.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+			Draw.SpriteBatch.End();
+			return;
 		}
 
-		Draw.SpriteBatch.Begin(spriteSortMode, blendState, samplerState, depthStencilState, rasterizerState, applyShaders ? null : effect, applyShaders ? Matrix.CreateScale(6f) : matrix);
-		Draw.SpriteBatch.Draw(initialDrawSource, initialDrawPosition, initialDrawSource.Bounds, Color.White, initialRotation, initialOrigin, initialScale, SpriteEffects.None, initialLayerDepth);
-		Draw.SpriteBatch.End();
-
-		if (!applyShaders) return;
-		
 		shaders.Sort((a, b) => a.Priority.CompareTo(b.Priority));
-
-		foreach (KeyValuePair<string, Texture2D> texPair in texturePool[TextureType.SpecialBuffer].Concat(texturePool[TextureType.GameplayBuffer])) {
-			Engine.Graphics.GraphicsDevice.SetRenderTarget((RenderTarget2D)texPair.Value);
-			Engine.Graphics.GraphicsDevice.Clear(Color.Transparent);
-
-			Texture2D texture = prefixToType(texPair.Key[0]) switch {
-				TextureType.SpecialBuffer => SpecialBuffers.Get(texPair.Key[1..])?? throw new ArgumentException($"special buffer {texPair.Key[1..]} specified in HD shader not found"),
-				TextureType.GameplayBuffer => (VirtualRenderTarget?)typeof(GameplayBuffers).GetField(texPair.Key[1..])?.GetValue(null)?? throw new ArgumentException($"GameplayBuffer {texPair.Key[1..]} specified in HD shader not found"),
-				_ => throw new Exception("cosmic bit flip"),
-			};
-
-			Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, null, Matrix.CreateScale(1920 / texture.Width, 1080 / texture.Height, 1));
-			Draw.SpriteBatch.Draw(texture, Vector2.Zero, texture.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
-			Draw.SpriteBatch.End();
-		}
-
-		// TODO: keep a list of all IShaderMask types somewhere instead of doing expensive reflection every frame
-		List<IShaderMask> shaderMasks = level.Tracker.Entities.Values.SelectMany(x => x).Where(x => typeof(IShaderMask).IsAssignableFrom(x.GetType())).Cast<IShaderMask>().ToList();
-		List<string> maskGroups = texturePool[TextureType.MaskGroup].Keys.Select(x => x[1..]).ToList();
-
-		Texture[] colorgradeTextures = new Texture[2] {
-			Engine.Graphics.GraphicsDevice.Textures[1],
-			Engine.Graphics.GraphicsDevice.Textures[2]
-		};
-
-		VirtualMap<MTexture> orig = level.SolidTiles.Tiles.Tiles.Clone();
-
-		foreach (string group in maskGroups) {
-			Engine.Graphics.GraphicsDevice.SetRenderTarget(tempLowRes);
-			Engine.Graphics.GraphicsDevice.Clear(Color.Transparent);
-
-			Draw.SpriteBatch.Begin(spriteSortMode, blendState, samplerState, depthStencilState, rasterizerState, null, level.Camera.Matrix);
-
-			foreach (IShaderMask sm in shaderMasks.Where(x => x.LowRes && x.MaskGroups.Contains(group))) {
-				sm.RenderMask();
-			}
-
-			if (TilesetShaderMaskHandler.TilesetMaskGroups.ContainsValue(group)) {
-				List<string> maskTilesetPaths = TilesetShaderMaskHandler.TilesetMaskGroups.Where(x => x.Value == group).Select(x => x.Key).ToList();
-				for (int i = 0; i < level.SolidTiles.Tiles.Tiles.Columns; i++) {
-					for (int j = 0; j < level.SolidTiles.Tiles.Tiles.Rows; j++) {
-						level.SolidTiles.Tiles.Tiles[i, j] = maskTilesetPaths.Contains(orig[i, j]?.Parent.AtlasPath!) ? orig[i, j] : null;
-					}
-				}
-
-				level.SolidTiles.Tiles.Render();
-
-			}
-
-			Draw.SpriteBatch.End();
-
-			Engine.Graphics.GraphicsDevice.SetRenderTarget((RenderTarget2D)texturePool[TextureType.MaskGroup][string.Concat("%", group)]);
-			Engine.Graphics.GraphicsDevice.Clear(Color.Transparent);
-
-			Draw.SpriteBatch.Begin(spriteSortMode, blendState, samplerState, depthStencilState, rasterizerState, null, Matrix.CreateScale(6f));
-
-			Draw.SpriteBatch.Draw(tempLowRes, initialDrawPosition, tempLowRes.Bounds, Color.White, initialRotation, initialOrigin, initialScale, SpriteEffects.None, initialLayerDepth);
-
-			foreach (IShaderMask sm in shaderMasks.Where(x => !x.LowRes && x.MaskGroups.Contains(group))) {
-				sm.RenderMask();
-			}
-
-			Draw.SpriteBatch.End();
-		}
-
-		level.SolidTiles.Tiles.Tiles = orig;
 
 		RenderTarget2D? source;
 		RenderTarget2D? target;
+		flipflop_targets ??= [ 
+			VirtualContent.CreateRenderTarget("yaoihelper-hd-shader-flip", 1920, 1080),
+			VirtualContent.CreateRenderTarget("yaoihelper-hd-shader-flop", 1920, 1080),
+		];
 
-		// TODO: this wastes a draw call
 		for (int i = 0, flopulation = 0; i <= shaders.Count; i++) {
-			source = flipflop_targets[flopulation % 2];
+			source = flopulation == 0 ? captured_backbuffer : flipflop_targets[flopulation % 2];
 			target = 0 switch {
 				_ when shaders.ElementAtOrDefault(i)?.Target is not null => (RenderTarget2D)texturePool[TextureType.Register][string.Concat('@', shaders[i].Target)],
 				_ when flopulation == shaders.Count(x => x.Target is null) => origTarget,
@@ -303,13 +332,8 @@ public static class HDShaderHandler {
 			Engine.Graphics.GraphicsDevice.Clear(Color.Black);
 
 			// again, for proper letterboxing
-			if (target == null) {
-				Engine.Graphics.GraphicsDevice.Viewport = Engine.Viewport;
-			}
-
 			if (target == origTarget) {
-				Engine.Graphics.GraphicsDevice.Textures[1] = colorgradeTextures[0];
-				Engine.Graphics.GraphicsDevice.Textures[2] = colorgradeTextures[1];
+				Engine.Graphics.GraphicsDevice.Viewport = Engine.Viewport;
 			}
 
 			Draw.SpriteBatch.Begin(
@@ -318,24 +342,25 @@ public static class HDShaderHandler {
 				SamplerState.PointClamp,
 				DepthStencilState.Default,
 				RasterizerState.CullNone,
-				target == origTarget ? ColorGrade.Effect : passShaderParams(shaders[i], level, target ?? throw new InvalidOperationException("expected nonnull target if it's not orig"),  target),
-				target == null ? Engine.ScreenMatrix : Matrix.Identity
+				target == origTarget ? null : passShaderParams(shaders[i], level, target ?? throw new InvalidOperationException("expected nonnull target if it's not orig"),  target),
+				target == origTarget ? Engine.ScreenMatrix : Matrix.Identity
 			);
-			Draw.SpriteBatch.Draw(source, Vector2.Zero, source.Bounds, Color.White, 0f, Vector2.Zero, 1f, target == origTarget && SaveData.Instance.Assists.MirrorMode ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0f);
+
+			Draw.SpriteBatch.Draw(source, Vector2.Zero, source.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
 			Draw.SpriteBatch.End();
 
 			if (shaders.ElementAtOrDefault(i)?.Target is null) {
 				flopulation++;
 			}
 
-			if (flopulation == shaders.Count(x => x.Target is null) - 1 && SpecialBuffers.Get("last_frame") is VirtualRenderTarget lastFrame) {
-				Engine.Graphics.GraphicsDevice.SetRenderTarget(lastFrame);
-				Engine.Graphics.GraphicsDevice.Clear(Color.Black);
-
-				Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.Identity);
-				Draw.SpriteBatch.Draw(target, Vector2.Zero, target?.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
-				Draw.SpriteBatch.End();
-			}
+			// if (flopulation == shaders.Count(x => x.Target is null) - 1 && SpecialBuffers.Get("last_frame") is VirtualRenderTarget lastFrame) {
+			// 	Engine.Graphics.GraphicsDevice.SetRenderTarget(lastFrame);
+			// 	Engine.Graphics.GraphicsDevice.Clear(Color.Black);
+			//
+			// 	Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone, ColorGrade.Effect, Matrix.Identity);
+			// 	Draw.SpriteBatch.Draw(target, Vector2.Zero, target?.Bounds, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
+			// 	Draw.SpriteBatch.End();
+			// }
 		}
 	}
 }
